@@ -1,0 +1,43 @@
+1.Linux中默认的解释器是哪个程序？
+   /bin/bash
+ 
+2.vim编辑器有几种工作模式？
+       三    命令模式  输入模式    末行模式
+
+3.重定向操作都有哪些？有什么区别？
+        >: 覆盖重定向
+       >>:追加重定向
+
+4.利用rpm命令检测firefox是否安装，请写出该命令？
+       rpm   -q   firefox
+
+
+5.利用yum安装httpd软件，请写出该命令？
+      yum  -y  install  httpd
+
+ 
+6.显示/etc/passwd文本文件内容中以root开头的行，请写出该命令？
+      grep   '^root'   /etc/passwd
+
+7.yum客户端配置文件放在什么路径下？具体都有哪些字段？
+          /etc/yum.repos.d
+                     [] 
+            name
+            baseurl
+	       enabled
+	       gpgcheck
+                        
+
+
+
+
+
+
+
+
+
+
+
+
+
+

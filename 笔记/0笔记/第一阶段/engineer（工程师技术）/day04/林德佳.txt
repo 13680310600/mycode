@@ -1,0 +1,132 @@
+案例1:为虚拟机 server 配置以下静态地址参数
+– 主机名:server0.example.com
+– IP地址:172.25.0.11
+– 子网掩码:255.255.255.0
+– 默认网关:172.25.0.254
+– DNS服务器:172.25.254.254
+
+nmcli connection modify 'System eth0' ipv4.method manual ipv4.addresses '172.25.0.11/24 172.25.0.254' ipv4.dns 172.25.254.254 connection.autoconnect yes
+
+
+
+
+
+案例2:虚拟机 server0上操作
+        新建用户 alex，其用户ID为3456，密码是flectrag 
+		useradd -u 3456  alex
+		echo flectrag | passwd --stdin alex
+	
+	创建下列用户、组以及组的成员关系： 
+	 – 一个名为 adminuser 的组 
+		groupadd adminuser
+
+	 – 一个名为 natasha 的用户，其属于 adminuser 组， 这个组是该用户的从属组 
+		gpasswd -a natasha  adminuser
+
+	 – 一个名为 harry 的用户，其属于 adminuser 组，这个 组是该用户的从属组 
+		gpasswd -a harry  adminuser
+
+	 – 一个名为 sarah 的用户，其在系统中没有可交互的 Shell（/sbin/nologin），并且不是 adminuser 组的成员 
+		usermod -s /sbin/nologin sarah
+
+	 – natasha 、harry、sarah 的密码都要设置为 redhat
+		echo redhat | passwd --stdin natasha
+		echo redhat | passwd --stdin harry
+		echo redhat | passwd --stdin sarah
+
+案例3:虚拟机 server0上操作,tar制作/释放归档压缩包（zcf、ztf、zxf、jcf、jtf、jxf、cf、tf）
+    1）备份/boot、/home这两个文件夹，保存为boothome.tar.gz文件
+		tar  -zcPf  boothome.tar.gz  /boot  /home
+
+    2）查看boothome.tar.gz文件内包含哪些内容
+		tar -tf  boothome.tar.gz
+ 
+    3）将boothome.tar.gz释放到文件夹/root/boothome/下
+		tar -xf  boothome.tar.gz  -C  /root/boothome
+
+    4）创建一个名为 /root/backup.tar.bz2 的归档文件，其中包含 /usr/local 目录中的内容
+		tar -jcPf  /root/backup.tar.bz2  /usr/local
+
+
+案例4:在在 server0、desktop0 上操作
+– 将防火墙默认区域设置为trusted
+	firewall-cmd --set-default-zone=trusted
+
+
+
+案例5:配置Samba文件夹共享，防火墙默认区域设置为trusted，修改SElinux状态为Enforcing
+	firewall-cmd --set-default-zone=trusted
+	setenforce 1
+
+在 server0 上发布共享文件夹
+ 1）此服务器必须是 STAFF 工作组的一个成员 
+	vim /etc/samba/smb.conf
+	找到并修改 	workgroup = STAFF
+	：wq
+
+ 2）发布目录 /devops，共享名为 devops 
+	vim  /etc/samba/smb.conf
+		[devops]
+		path = /devops
+	:wq
+	systemctl restart smb	
+	systemctl enable smb	
+
+	getsebool -a | grep samba			
+	setsebool samba_export_all_ro  on 
+
+ 3）用户 harry 对共享 devops可读可写，密码是 123
+	vim  /etc/samba/smb.conf
+		[devops]
+		path = /devops
+		write list = harry
+	:wq
+
+	pdbedit -a  harry
+	Passwd: 123
+
+	setfacl -m u:harry:rwx  /devops/
+	getsebool -a | grep samba
+	setsebool  samba_export_all_rw  on
+
+
+
+
+在 desktop0 上访问共享文件夹
+
+ 1）访问 server0 上发布共享文件夹,实现开机自动挂载到/mnt/smb
+ 2）实现对/mnt/smb目录可以读和写
+
+	vim /etc/fstab
+		//172.25.0.11/devops  /mnt/smb/ cifs defaults,user=harry,pass=123,_netdev 0 0
+	:wq
+	mount -a
+      df -h
+
+ 
+
+
+案例6：普通NFS共享的实现
+  1. 在 server0 上配置NFS服务 
+   1）只读的方式共享目录 /public，只能被172.25.0.0/24网段中的客户机系统访问 
+	vim /etc/exports
+		/public 172.25.0.0/24(ro)
+	:wq	
+	mkdir /public
+	systemctl restart  nfs-server
+	systemctl enable nfs-server
+
+ 
+  2. 在 desktop0 上访问NFS共享目录 
+   1）将 server0 的 /public 挂到本地 /mnt/nfsmount 
+   2）这些文件系统在系统启动时自动挂
+
+	mkdir /mnt/nfsmount
+	vim /etc/fstab
+		172.25.0.11:/public  /mnt/nfs  nfs  defaults,_netdev  0  0
+	:wq
+	mount -a
+	df -h
+
+
+

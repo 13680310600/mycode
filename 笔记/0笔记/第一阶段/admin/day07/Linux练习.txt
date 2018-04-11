@@ -1,0 +1,186 @@
+一、Linux管理员技术
+
+Day01
+
+1.Linux的组成有那两部分?
+	Linux内核 + 应用程序
+
+2.Linux目录结构中“/”与“/dev”主要作用？
+	/：所有的数据都在此目录下（Linux系统的起点）     	/dev:是存放硬件设备内容的目录
+
+3.Linux中常见的文件系统都有哪些？
+	RHEL 6：ext4  RHEL 7: xfs   SWAP:交换空间（虚拟内存）
+
+4.挂载点的作用是什么？
+	能通过本地文件去访问设备的内容
+
+5.查看主机名与IP地址的命令分别是？
+	hostname	ifconfig
+
+6.关机与重启的命令分别是? 
+	关机：poweroff /shutdown		重启：reboot
+
+7.切换到/dev目录的命令是？
+	cd /dev/
+
+8.显示/root目录内容详细属性怎么实现？
+	ls -l  /root/
+
+9.敲命令提示“command not found”原因有那两种？
+	命令输入错误       没安装该命令
+
+10.查看CPU信息命令是？
+	lscpu
+
+
+
+Day02
+
+1.Linux中命令的执行依赖于解释器，默认的解释器是哪个程序？
+	/bin/bash			(解释器的路径： /etc/shells)
+
+2.Linux中一条完整的命令，它的格式是什么？
+	命令字 [选项]..  [参数1] [参数2]...
+
+3.切换上一级目录的操作命令？去往用户root的家目录操作？
+	cd ..      	 cd ~
+
+4.利用通配符匹配出/etc目录下以tab结尾的文件？
+	grep 'tab$' /etc
+
+5.cp命令在使用时，源是一个目录时需要加什么选项？保持原文件的属性不变需要加什么选项？复制时出现同名的文件，禁止提示该如何操作？
+	-r		-p			去到 /root/.bashrc 里面删除  alias cp='cp -i'  这一行就行
+
+6.在vim末行模式中，输入什么可以不保存退出?
+	q！
+
+
+
+Day03
+
+1.“>”与“>>”的区别？
+	>覆盖原文件内容    >> 追加到原文件的最后一行
+
+2.输出/etc/passwd文件中包含root的行，操作命令是？
+	grep 'root' /etc/passwd 
+
+3.挂载/dev/cdrom到/opt/mydvd，请写出该操作的命令。
+	mount /dev/cdrom  /opt/mydvd
+
+4.利用rpm命令如何检查firefox是否安装？
+	rpm -p  firefox
+
+5.利用rpm命令如何安装vsftpd-3.0.2-10.el7.x86_64.rpm软件包？
+	rpm  -ivh  vsftpd-3.0.2-10.el7.x86_64.rpm
+
+6.将本机的网络接口"System eth0"配置静态IP地址172.25.0.11/24的命令?
+	nmcli connection  modify  'System eth0'  ipv4.method manual 
+	ipv4.addresses 172.25.0.100/24  connection.autoconnect yes 
+
+
+7.利用find查找/boot目录下大于300k并且必须是文件，拷贝到/opt该如何操作？
+	find /boot/  -size +300k -type f  -exec cp {} /opt/ \;
+
+8.请显示ifconfig命令的输出结果的前两行，该如何操作？
+	head -2 ifconfig
+
+9.请显示/etc/login.defs文件有效信息，该命令是？
+	grep -v '^#' /etc/login.defs
+
+10.利用wget下载 http://classroom.example.com/redhat.txt，该命令是？
+	wget  http://classroom.example.com/redhat.txt
+
+
+
+Day04
+
+1.重启服务  chronyd 的命令？
+	systemctl restart chronyd
+
+2.设置服务  chronyd开机自启 的命令？
+	systemctl enable chronyd
+
+3.使用 tar 工具制作/root/backup.tar.bz2 的归档文件，其中包含 /usr/local 目录中的内容。
+	tar -jcPf /root/backup.tar.bz2  /usr/local/
+
+4.Linux如何标识用户账户和组账号？
+	UID	GID
+
+5.保存用户帐号的基本信息的配置文件，都有哪些字段？
+	root:x:0:0:root:/root:/bin/bash
+	用户名：密码占位符号：UID：基本组的GID：用户描述信息（可以为空）：家目录位置：默认的解释器
+
+6.非交互式为zhangsan设置密码123的命令?
+	echo 123 | passwd --stdin zhangsan
+
+7.如何添加用户harry到组tarena中？
+	groupadd tarena
+	gpasswd -a harry tarena
+
+8.Linux中编写周期性计划任务命令是什么？
+	crontab -e [-u 用户名]
+
+9.Linux中编写周期性计划任务，时间的格式？
+	分 时 日 月 周
+
+10.组账号基本信息存放的文件在哪里？
+	/etc/group
+
+
+
+Day05
+
+1.Linux中归属关系有哪些？
+	所属主   所属组  其他人
+
+2.用户能否cd切换到该目录下，和什么权限有关？
+	x 可执行权限
+
+3.修改归属关系及修改权限的命令是什么？
+	chown 
+
+4.使用户 natasha 能够对此文件/opt/1.txt执行读和写操作，利用ACL策略操作命令是什么？
+	setfacl -m u:natasha:rwx /opt/1.txt
+
+5.在此目录中创建的新文档，其所属组会自动设置，与父目录相同的所属组，如何实现？
+	chmod g+s /目录
+
+6.在LDAP客户端需要安装什么软件包提供支持?
+	sssd	
+
+7.查看NFS都有那些共享的命令是什么？
+	showmount -e  服务器名
+
+8.将NFS服务器(192.168.1.1)上共享目录/home/guests，挂载到本地/mnt其操作命令是？
+	mkdir /home/guests
+	mount  192.168.1.1:/home/guests  /home/guests
+
+
+
+
+Day06
+
+1.创建一个名为example的用户，用户ID是 3260。密码是tmooc
+	useradd -u 3260  example  
+	echo tmooc | passwd --stdin example
+
+2.创建名为study的组，创建test01的用户，其属于study，这个组是该用户的从属组
+	groupadd study 
+	useradd test01
+	gpasswd -a  test01 study
+
+3.为用户test01配置一个定时任务，每天在本地时间14:23时执行以下命令a /bin/echo hiya
+	crontab -e -u test01
+	i 进入输入模式
+	23 14 * * * a /bin/echo hiya
+	Esc
+	:wq
+
+4.找出所有用户student拥有的文件，并且把它们拷贝到/root/findfiles 目录中
+	find / -user student -type f   -exec cp {} /root/findfiles/ \;
+
+5.在文件/usr/share/dict/words中查找到所有包含字符串seismic的行，将其筛选内容写入到/root/wordlist文件中。
+	grep 'seismic' /usr/share/dict/words  >>  /root/wordlist
+
+
+

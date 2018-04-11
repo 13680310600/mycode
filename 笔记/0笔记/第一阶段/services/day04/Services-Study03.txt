@@ -1,0 +1,66 @@
+1.DNS服务split分离解析的作用？
+  
+当不同类别的客户机请求解析同一个域名时，得到的解析结果不同
+意义：让客户端访问网络中最近的服务器
+ 
+2.RAID1是什么模式？是否有容错功能？
+  镜像模式，是
+
+
+3.RAID5至少需要几块磁盘？是否有容错功能？
+    3，是
+
+							
+4.Linux中查看进程信息的命令都有哪些？
+ pstree   ps aux  ps -elf  top  pgrep 
+
+
+5.Linux中将进程放入后台，方法都有哪些？
+    &
+  Ctrl+z
+
+6.Linux中杀死进程，方法都有哪些？
+  kill  killall  pkill
+
+7.Linux中常见的日志文件都有哪些？
+ /var/log/messages   记录内核消息、各种服务的公共消息
+ /var/log/dmesg      记录系统启动过程的各种消息
+ /var/log/cron       记录与cron计划任务相关的消息
+ /var/log/maillog    记录邮件收发相关的消息
+ /var/log/secure     记录与访问限制相关的安全消息
+
+
+8.请写出学过的10条Linux命令？（请开始你的表演）
+
+ ls  pwd  cd  cp  mv   rm  find  grep  cat  less  man  hostname  
+ ifconfig
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

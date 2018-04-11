@@ -1,0 +1,57 @@
+查看设备版本信息，其中Baseethernet MAC Address为MAC地址
+	show version
+	
+
+启用生成树命令：
+	spanning-tree vlan vlan-list      默认交换机开启此命令
+指定根网桥：
+	spanning-tree vlan vlan-list priority Brige-number
+	打错Brige-number也没有关系会自动提示正确的。
+	例如：
+	spanning-tree vlan 1 priority 24576  主根网桥
+	spanning-tree vlan vlan-list root (primary|secondary)
+	例子：
+	spanning-tree vlan 1 root secondary  次根
+
+	PVST+ 每个vlan生成树（实现负载均衡）
+		配置网络中比较稳定的交换机为根网桥
+
+	拓扑图互为主被
+		in f0/1-5   进入所有的接口
+		sw tru en do	   封装
+		sw mo tru   创建trunk
+		
+子网划分(n错位借位)
+	11000000.10101000.0000000.00000001
+	11111111.11111111.1111111.11000000
+	192.168.0.0～63
+	11000000.10101000.0000000.10000001
+	11111111.11111111.1111111.11000000
+	192.168.0.64～127
+	128	64	32	16	8	4	2	1	
+问题一：
+	216.22.45.201  /29
+	216.22.45.205  /29
+思路：
+	1.将ip与子网掩码换算成二进制
+	2.根据主机位计算网络ID（将主机位置为0）
+	3.两个网络ID进行对比，网络ID一致则同一个网段
+
+
+
+路由器配置进入内网的f0/0接口
+	standby 1 ip 192.168.0.254
+修改优先级，默认100.越大越优先
+	standby 1 priority 105
+配置占先权
+	standby 1 preempt
+察看热备份协议状态
+	standby brief
+端口跟踪，跟踪f0/1，断掉后优先级减少0
+stanbdy 1 track fastEthernet 0/1
+如果有异常保存重启
+wr
+reload
+
+	
+

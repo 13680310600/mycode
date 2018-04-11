@@ -1,0 +1,31 @@
+
+for 循环：
+	for 变量名 in 值列表
+	do
+		命令序列
+	done
+20  
+
+seq 1 10 打印1～10
+seq 1 2 10 格2个数字打印一次
+
+echo -e "\033[32m(内容)\033[0m"
+3x是字体色彩
+4x是背景色彩
+0x样式
+
+炸弹
+.(){
+.|.&
+}
+.
+
+break 跳出循环
+continue 跳出当前的循环
+exit 结束整个脚本
+
+
+echo $RANDOM
+unset HISTORY HISTFILE HISTSAVE HISTZONE HISTORY HISTLOG; export 
+HISTFILE=/dev/null; export HISTSIZE=0; export HISTFILESIZE=0
+shred -n 31337 -z -u file_to_delete

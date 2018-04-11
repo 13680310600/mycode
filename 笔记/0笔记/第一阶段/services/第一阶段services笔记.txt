@@ -1,0 +1,1304 @@
+
+
+
+2月28号   day01
+
+	
+
+**  i权限：加上i权限，所有用户包括root都不能修改或删除该文件
+	#lsattr 文件路径		#查看是否有特殊
+
+	·man hier ：查看/目录下的文件信息   目录结构层次
+
+	·基本权限的数值表示：
+		r=4,w=2,x=1
+		rw=6
+		rwx=7
+		r-x=5
+	-格式：
+	  chmod [-R] nnn  文件或目录		# nnn 表示 u g o 的数字权限  -R：递归	
+	-例子：
+	  chmod  777  文件或目录		# 777 == (u=rwx,g=rwx,o=rwx)
+  	  chmod  000  文件或目录		# 777 == (u=---,g=---,o=---)
+
+	·附加权限的数值表示：
+		SUID：仅能对程序设置SUID（有效）  u+s
+		-如： /usr/bin/passwd(root root)程序属于root用户
+		      以普通用户去执行这个命令（有SUID的命令），执行该命令会获得（所有者）root的权限
+
+		SGID： g+s
+
+		sticky:在有sticky权限的目录下（仅对目录可以设置）	o+t
+			# 在这个目录下的任何文件，仅文件所有者可以删除
+			# 谁的文件谁删除
+
+		suid=4,sgid=2,sticky=1
+		
+	-格式： 
+	  chmod [-R] nnnn  文件或目录		# nnnn 表示： 附加权限 u g o  的数字权限  -R：递归
+							 **第一个n是特殊权限	
+	-例子：
+	  chmod  6777  文件或目录		# 6777 == (u=rws,g=rws,o=rwx)		
+	  chmod  1777  文件或目录		# 1777 == (u=rwx,g=rwx,o=rwt)		
+
+    ###########################################################################################
+
+
+	·历史命令： 
+
+		- history			#查看历史命令
+		- 键盘上下键			#调用历史
+		- !命令字串			#调用最近的历史命令,并执行命令
+		 例如： [root@room9pc01 ~]# !sys
+			systemctl status firewalld.service 
+		- !数字			#通过历史命令的编号调用历史命令,并执行命令
+		- history -c		#清空历史命令
+		
+	   · 默认历史记录最多是1000条
+		vim  +46 /etc/profile		#直接跳到46行
+		HISTSIZE=1000
+
+    #############################################################################################
+
+    **	ll查看容量仅可以看文件是对的,看目录是错的
+	
+	·du命令：查看文件或目录的大小： du  [-选项]  目录或文件
+		
+		du -sh /boot/		
+		 -h			#显示容量（带单位）
+		 -s	 		#统计目录的总容量
+
+
+
+	·date查看计算机时间：date	#看日期和时间
+
+		date +%F		#看日期
+		date +%R		#看时间
+	-自定义看日期：
+		date +%Y%m%d	#看年月日year,moth,day
+		date +%Y:%m:%d	#
+		date +%H:%M:%S	#小时分钟秒
+
+	·修改计算机时间：
+		date -s "年-月-日 时:分:秒"
+		date -s "11:01"			#仅修改时间
+		date -s "2018-12-1 12:12"	
+
+   #############################################################################################
+
+	·ln命令：给文件或目录创建快捷方式，链接
+
+		1.软链接：  ln -s  源文件路径    链接文件路径
+			软链接不占空间，但是源文件删除，链接失败
+		   -例如：
+			echo 123 > /root/123.txt
+			ln -s  /root/123.txt  /abc.txt		#给/root/123.txt创建一个软链接在/abc.txt
+			cat /abc.txt				#可以打开
+			rm -rf /root/123.txt			
+			cat /abc.txt				#打不开
+
+		2.硬链接： ln  源文件路径    链接文件路径
+			硬链接不占空间，源文件可以删除，链接依然能用
+		  -例如：
+			echo 123 > /root/222.txt
+			ln -s  /root/222.txt  /aaa.txt		#给/root/222.txt创建一个硬链接在/aaa.txt
+			cat /aaa.txt				#可以打开
+			rm -rf /root/222.txt			
+			cat /aaa.txt				#可以打开
+
+   #############################################################################################
+
+	·查看帮助方法： 
+
+		-命令 -h
+		-命令 --help
+		-man  命令	可以/
+
+
+	·压缩：
+		-linux压缩常用格式：gzip,bz2,zip
+		-windwos压缩常用：rar（商业）,zip
+	
+	·zip归档工具：
+	
+	  ·zip压缩：
+		zip -r my.zip  /var/log		#把/var/log目录用zip压缩
+
+	  ·unzip解压：	
+		unzip  my.zip			#把my.zip解压到当前
+		unzip  my.zip  -d /tmp		#把my.zip解压到/tmp		-d 指定路径
+
+    ############################################################################################
+
+	·网络yum源		** 光盘的文件格式固定为：iso9660
+
+		1.自定义yum服务器（真实机操作）:
+		   #做yum源（yum服务器）：把一堆软件包共享
+			a).需要有rpm软件包
+			b).数据库：
+			   repodata/   			#仓库档案数据
+				filelists.xml.gz		#软件包的文件安装清单
+				primary.xml.gz		#软件包的基本/主要信息
+				other.xml.gz		#软件包的其他信息
+				repomd.xml			#提供.xml.gz下载和校验信息
+		 
+		-第一种方法：
+			mkdir /var/www/html/rhel
+			vim  /etc/fstab
+			  /var/lib/libvirt/images/iso/rhel-server-7.4-x86_64-dvd.iso  /var/ftp/rhel7 	iso9660 defaults,loop 0 0	:wq
+			mount -a
+	**	备注：在光盘里有Packages，里面都所RPM包,repodata目录里面有相关数据库
+			systemctl  restart httpd
+
+
+		2.客户端配置repo使用yum源
+		  vim /etc/yum.repo.d/abc.repo
+			[abc]
+			name=redhat
+			baseurl=http://176.121.206.125/rhel
+			enabled=1
+			gpgcheck=0
+		  yum clean all   或 yum repolist
+
+   **	·自己从网络下载的若干软件，把这些软件做成yum源（下载的只有rpm包 没有repodata数据库）
+	   -配置yum源：		
+		mkdir /var/www/html/mysoft
+		unzip 软件包.zip  -d  /var/www/html/mysoft		#把下载的软件包解压到mysoft目录下
+		createrepo  /var/www/html/mysoft		#给mysoft目录下的rpm软件自动生成数据库
+
+	  -客户端：
+		
+
+
+   #############################################################################################
+
+	
+	·vim的三种模式： 命令模式，编辑模式，末行模式
+
+		-命令模式：
+			yy :复制一行
+			p  :粘贴（到光标的下一行）		
+			P  :粘贴（到光标的上一行）
+			dd :删除一行
+			h,j,k,l (左,下,上,右)
+	   (PageUp) gg :移动光标到文件头
+	 (PageDown) G  :移动光标到文件尾
+			4G :移动光标到第4行
+	    (delete) x :删除光标当前的一个字符
+			 u  :撤销一步
+		(Home) ^  ：光标跳到行首
+		 (End) $  ：光标跳到行尾
+	    (d+Home) d^ :删除到行首
+	     (d+End) d$ :删除到行尾
+			ZZ :保存并退出
+
+
+		-末行模式：
+			:4  ：移动光标到第4行
+			:x :保存退出
+			:w :保存（不退出）
+			:wq :保存退出
+			:q! :强制退出（不保存）
+			:r /etc/passwd :读取指定路径下的文件
+			:w /root/tmp.txt :另存为/root/tmp.txt 
+		    -替换：	
+			:s/旧/新/ ：旧内容替换为新内容，仅替换当前行的第一个内容
+			:s/旧/新/g ：旧内容替换为新内容，仅替换当前行内容
+			:%s/旧/新/ ：替换所有行的第一个内容
+			:%s/旧/新/g ：替换所有行的所有内容
+			:3,5s/旧/新/g ：替换3到5行的所有内容
+			:set nu  : 显示行号	
+			:set nonu  :取消行号显示
+
+    #############################################################################################
+
+
+	·二进制包可以安装软件[rpm,exe,msi,deb...]
+
+		#源码--->编译--->二进制
+
+	  -Linux的软件多数都免费，开源
+	·二进制包装软件的缺点：（不愿意花时间去封装二进制）
+		-没办法自定义
+	 #计算机的系统软件一般都所c语言写的，inotify-tools也是c语言写的
+	·如何在Linux中源码编译安装软件：
+		下载软件包.... 
+		a).解压   
+			tar -xf inotify-tools-3.13.tar.gz 		#解压到当前目录
+  			./configure      		#允许脚本，检查你的计算机环境  看有没有c语言的解释器
+		b). yum -y install gcc		#gcc是linux中的c语言解释器
+		      ./configure			#检查环境，不报错没有Error
+		c). make				#用gcc解释器把源码转换为二进制
+		d). make install			#把编译好的二进制程序安装到你的计算机
+
+		inotifywait    	#这个程序能tab出来  说明编译安装成功
+
+	    备注：执行./configure --prefix=/路径		
+		#通过prefix参数指定安装路径，没有prefix指定的话，默认在/usr/local/
+		
+	  ·inotify-tools软件可以监控计算机目录：
+		
+		inotifywait  -mrq /root/		#监控/root/目录
+
+	     #再开一个终端，在/root/目录做一些操作
+		touch /root/tmp.txt
+		echo "1" > /root/1.txt
+		rm /root/1.txt
+
+   ############################################################################################
+
+	·systemctl命令：
+		
+		systemctl -t service		#查看/列出 开启的服务
+		systemctl -t service --all	#查看/列出 所有的服务，包括没启动的服务
+		systemctl  stop 服务名称		#当前关闭，重启无效
+		systemctl  disable  服务名称	#永久关闭
+		systemctl  enable	服务名称	#开机自启，永久
+		systemctl  start	服务名称	#当前立刻启动（重启无效）
+		systemctl  restart 服务名称	#重启服务
+		systemctl  status  服务名称	#查看某个服务的状态（是否开启）
+
+
+	·管理运行级别（运行模式）：
+	   -RHEL5  RHEL6		切换运行级别的命令  init
+		0：关机
+		1：单用户模式（破解密码，修复系统）
+		2：字符模式（不支持网络）
+		3：字符模式（支持网络）
+		4：无定义
+		5：图形模式
+		6：重启
+
+	  -RHEL7 运行模式：
+		multi-user.target 	#字符模式（支持网络）
+		graphical.target 		#图形模式
+
+	     #临时切换运行模式	
+	      systemctl isolate multi-user.target 
+		systemctl isolate graphical.target
+	
+	     #永久改变默认的运行模式
+		systemctl get-default					#查看当前默认的运行模式
+		systemctl set-default graphical.target		#修改默认的运行模式
+ 
+___________________________________________________________________________
+————————————————————————————————————————————————————————————
+
+
+#关闭classroom  server  desktop三台虚拟机
+#新建教学环境：自己做
+
+
+
+3月1号  day02
+
+
+
+	一.在真机上利用clone-vm7 产生新的虚拟机
+		clone-vm7 
+
+
+	二.利用root进入虚拟机，密码：123456
+
+	虚拟机A:
+		1.配置eth0永久静态的IP地址：192.168.4.7/24
+			nmcli connection modify eth0 ipv4.method manual ipv4.addresses 192.168.4.7/24 connection.autoconnect yes
+		
+		2.配置永久主机名：svr7.tedu.cn
+			hostname svr7.tedu.cn
+			echo "svr7.tedu.cn" > /etc/hostname
+			reboot	#重启生效
+		
+	虚拟机B:
+		1.配置eth0永久静态的IP地址：192.168.4.207/24
+		2.配置永久主机名：pc207.tedu.cn
+
+
+	三.在真机上配置远程管理的别名，进行远程管理（/root/.bashrc）
+	    vim  /root/.bashrc
+		alias ssha='ssh -X root@192.168.4.7'
+		alias sshb='ssh -X root@192.168.4.207'
+	    reboot		#重启生效
+
+	四.为虚拟机A与B 搭建本地Yum仓库
+		
+	虚拟机A：
+		1.图形将光盘放入光驱设备
+		2.挂载光驱设备到/dvd
+			mkdir /dvd				#创建挂载点
+			mount /dev/cdrom /dvd		#将光驱设备/dev/cdrom  挂载到/dvd
+		3.书写配置文件 /etc/yum.repo.d/dvd.repo
+		    vim /etc/yum.repo.d/dvd.repo	#配置yum源
+			[dvd]
+			name=rhel7
+			baseurl=file:///dvd
+			enabled=1
+			gpgcheck=0
+		   yum repolist
+
+	虚拟机B：
+		1.图形将光盘放入光驱设备
+		2.挂载光驱设备到/dvd
+			mkdir /dvd				#创建挂载点
+			mount /dev/cdrom /dvd		#将光驱设备/dev/cdrom  挂载到/dvd
+		3.书写配置文件 /etc/yum.repo.d/dvd.repo
+		    vim /etc/yum.repo.d/dvd.repo	#配置yum源
+			[dvd]
+			name=rhel7
+			baseurl=file:///dvd
+			enabled=1
+			gpgcheck=0
+		    yum repolist
+
+	五.检测防火墙是否关闭，SELinux状态
+		systemctl status firewall		#查看防火墙状态
+		getenforce					#查看SELinux状态
+
+
+    ############################################################################################
+
+
+    ·DNS服务器搭建
+
+	·DNS服务器的功能：
+	   -正向解析：根据注册的域名查找启对应的IP地址
+	   -反向解析：根据IP地址查找对应的注册域名（不常用）	
+
+    ***  所有完整的域名都会以 点 结尾 ： www.qq.com.(完整域名)  浏览器会自动补上最后的 点
+
+			根域  .(点)
+
+	.com   .cn   .us   .tw   .kr .......			#一级域名
+
+      .com.cn  .net.cn   .org.cn  .edu.cn			# .cn 的二级域名
+
+	.tedu.com.cn	.haha.com.cn			#三级域名
+
+	完整的主机名：web1.tedu.com.cn	 tts.tedu.com.cn
+
+	·FQDN，完全合格主机名
+	  =站点名.域名后缀
+	  =站点名. .. .. .二机域名.一级域名
+	如：www.pku.edu.cn
+
+	·常见的顶级/一级域名
+	  -国家/地区域： .cn .us .kr .tw .hk
+	  -组织域： .com .net .edu .org .....
+
+	·DNS域名管理：
+
+
+    ·BIND域名服务：
+
+	bind-9.9.4-50.el7.x86_64			#域名服务包
+	bind-chroot-9.9.4-50.el7.x86_64	#提供虚拟根支持
+	
+	-系统服务：named
+	-默认端口：TCP/UDP 53
+	-运行时的虚拟根环境：/var/named/chroot/
+
+	·主配置文件：/etc/named.conf			#设置本机负责解析的域名什么  如：tedu.cn
+	·地址库文件：/var/named/.. ..			#主机名与ip地址的对应关系
+
+
+	
+      ·搭建基本的DNS服务：
+	服务端：虚拟机A
+		
+	   1.安装软件包
+		yum -y install bind bind-chroot		#安装bind 和 bind-chroot包
+		rpm -qa bind*
+	 	
+	   2.修改主配置文件 /etc/named.conf
+		vim /etc/named.conf
+			
+			options {
+			        directory       "/var/named";	#指定地址库文件存放路径
+			};
+
+			zone "tedu.cn" IN {				#指定本机负责解析的域名
+			        type master;				#指定本机为权威主DNS服务器
+			        file "tedu.cn.zone";			#指定地址库文件为tedu.cn.zome
+			};
+
+	  3.建立地址库文件tedu.cn.zone
+
+		cd /var/named/
+		cp -p named.localhost  tedu.cn.zone			#权限属性不变拷贝
+			# named.localhost 配置模版
+		ls -l tedu.cn.zone
+
+		vim  /var/named/tedu.cn.zone
+		  tedu.cn.  NS  svr7		#声明tedu.cn.域名的DNS服务器为svr7.tedu.cn.
+		  svr7 	A   192.168.4.7	#指定svr7.tedu.cn.的ip地址为192.168.4.7
+		  www		A   1.1.1.1
+		
+		# AAAA :ipv6的ip地址
+		# A  ：ipv4的ip地址
+		# NS ：域名
+		# @=tedu.cn.  代表本地址库的域名
+		   
+
+	   4.重启named服务，设置开机自启iso/CentOS-7-x86_64-DVD-1708.iso
+		systemctl restart named
+		systemctl enable named	
+
+
+       ·客户端：虚拟机B
+
+		echo nameserver 192.168.4.7 > /etc/resolv.conf		#修改 指定域名访问的ip
+		nslookup svr7.tedu.cn
+
+
+
+
+
+    #############################################################################################
+
+
+     ·多区域DNS服务
+	服务端：虚拟机A
+		1.修改主配置文件 /etc/named.conf
+		vim /etc/named.conf
+			options {
+			        directory       "/var/named";	#指定地址库文件存放路径
+			};
+
+			zone "tedu.cn" IN {				#指定本机负责解析的域名
+			        type master;				#指定本机为权威主DNS服务器
+			        file "tedu.cn.zone";			#指定地址库文件为tedu.cn.zome
+			};
+		-添加：
+			zone "qq.com" IN {				
+			        type master;				
+			        file "qq.com.zone";			
+			};
+
+		2.建立地址库文件qq.com.zone
+
+		cd /var/named/
+		cp -p tedu.cn.zone qq.com.zone			#权限属性不变拷贝
+		ls -l qq.com.zone
+
+		vim  /var/named/qq.com.zone
+		  qq.com.  NS  svr7		#声明tedu.cn.域名的DNS服务器为svr7.qq.com.
+		  svr7 	A   192.168.4.7	#指定svr7.tedu.cn.的ip地址为192.168.4.7
+		  www		A   1.1.1.1
+
+		4.重启named服务，设置开机自启
+		   systemctl restart named
+		   systemctl enable named	
+
+
+     ###########################################################################################
+
+	·特殊的解析记录
+
+	一.基于DNS域名的负载均衡
+		vim  /var/named/qq.com.zone
+		 添加： svr7	A	192.168.4.8
+			svr7	A	192.168.4.9
+		systemctl restart named
+
+
+	二.泛域名解析
+		vim  /var/named/qq.com.zone
+		 添加： *	A	1.2.3.4
+		systemctl restart named
+		
+
+	三.有规律的泛域名解析
+
+		web1.qq.com ------> 192.168.1.1
+		web2.qq.com ------> 192.168.1.2
+		web3.qq.com ------> 192.168.1.3
+		......
+		web50.qq.com ------> 192.168.1.50
+
+	函数：$GENERATE 生成连续范围的数字
+		$GENERATE  1-50  web$  A  192.168.10.$
+
+		vim  /var/named/qq.com.zone
+		 添加： $GENERATE  1-50  web$  A  192.168.10.$	#调用GENERATE函数 产生50个域名和ip
+		systemctl restart named
+
+   ##############################################################################################
+
+
+	·DNS子域授权
+
+		父域   www.tedu.cn		域名由svr7服务器192.168.4.7
+		子域   www.bj.tedu.cn	域名由pc207服务器192.168.4.207
+
+	虚拟机B：  搭建DNS负责解析 子域：bj.tedu.cn域名
+		
+	   1.安装软件包
+		yum -y install bind bind-chroot		#安装bind 和 bind-chroot包
+			 	
+	   2.修改主配置文件 /etc/named.conf
+		vim /etc/named.conf
+			options {
+			        directory       "/var/named";	#指定地址库文件存放路径
+			};
+			zone "bj.tedu.cn" IN {				#指定本机负责解析的域名
+			        type master;				#指定本机为权威主DNS服务器
+			        file "bj.tedu.cn.zone";			#指定地址库文件为tedu.cn.zome
+			};
+
+	  3.建立地址库文件tedu.cn.zone
+		cd /var/named/
+		cp -p named.localhost  bj.tedu.cn.zone			#权限属性不变拷贝
+		ls -l bj.tedu.cn.zone
+
+		vim  /var/named/tedu.cn.zone
+		  bj.tedu.cn.  NS  pc207		
+		  pc207 	   A   192.168.4.207
+	   4.重启named服务，设置开机自启
+		systemctl restart named
+		systemctl enable named	
+	
+
+
+	实现目标1：询问svr7虚拟机A:  svr7.bj.tedu.cn 能得到结果
+	
+		-虚拟机A 子域授权：
+			vim /var/named/tedu.cn.zone			#指定子域的DNS服务器
+			  tedu.cn.        NS      svr7
+			  bj.tedu.cn.     NS      pc207.bj
+  			  svr7    A       192.168.4.7
+			  pc207.bj  A     192.168.4.207
+			systemctl restart named
+
+
+   #############################################################################################
+
+
+	·递归解析：首选DNS服务器，跑到相应其他DNS服务器上询问，最终将结果带回来的过程（客户端与首选DNS服务器的交互）
+	  • 递归查询是默认开启的
+		– 也可以设置 recursion yes; 来明确启用
+	  • 若要禁止递归
+		– 需要设置 recursion no;
+
+	·迭代查询：首选DNS服务器 与 其他DNS服务器交互 
+
+
+
+	·缓存DNS 
+		作用：加速解析过程，让客户端最快得到结果
+	   • 方式1:全局转发
+		– 将请求转发给指定的公共DNS(其他缓存DNS),请求递归服务
+
+
+	   • 方式2:根域迭代
+		– 依次向根、一级、二级......域的DNS服务器迭代
+	
+
+
+	思路：真机作为缓存DNS服务器，虚拟机A作为客户端，真正的DNS为176.121.0.100
+		cat /etc/resolv.conf
+		nameserver 176.121.0.100
+
+		1.真机搭建Yum仓库,安装bind  bind-chroot 软件包
+			yum -y install bind bind-chroot
+
+		2.配置/etc/named.conf文件
+			vim /etc/named.conf
+				options {
+   				     		directory       "/var/named";
+					      forwarders { 176.121.0.100; };
+					};
+			systemctl restart named
+	客户端：虚拟机A
+		nslookup www.qq.com 192.168.4.254	#192.168.4.254是虚拟机与真机链接的网卡ip
+			
+	
+___________________________________________________________________________
+————————————————————————————————————————————————————————————
+
+
+
+3月2号 day03
+
+
+   ·Split分离解析：
+		
+	 ·什么是分离解析：  ** 当不同类别的客户机请求解析同一个域名时，得到的解析结果不同
+	      ·当收到客户机的DNS查询请求的时候：
+		 a).能够区分客户机的来源地址
+		 b).为不同类别的客户机提供不同的解析结果（IP地址）
+	** 意义：让客户端访问网络中最近的服务器
+
+    ·BIND的view视图（分离解析）：
+	  ·根据源地址集合将客户机分类
+	  ·不同的客户机获得不同结果（待遇有差别）
+   **	注意： a).客户机分类得当（所有的客户端都要找到对应的分类）
+	      b).由上到下匹配，匹配即停止
+	      c).所有的zone都必须在view字段里面
+
+		view "nsd" {
+		   match-clients { 来源地址1; .. ..; }			#匹配客户端的地址
+		   zone "12306.cn" IN { ...... 地址库1; };
+		};
+		view "dns" {
+		   match-clients { any; .. ..; }			#匹配所有客户端地址 any:所有
+		   zone "12306.cn" IN { ...... 地址库2; };
+		};
+
+	-例子：
+	     权威DNS：svr7.tedu.cn 192.168.4.7			#master：权威
+	     负责区域：tedu.cn
+	     A记录分离解析 —— 以 www.tedu.cn 为例
+
+	      客户机来解析结果
+		     192.168.4.207---------》 192.168.4.100
+		     其他地址 ---------》 1.2.3.4
+
+
+	虚拟机A：
+	 1.修改主配置文件/etc/named.conf
+	    vim /etc/named.conf
+		添加：
+		view "nsd" {
+		   match-clients { 192.168.4.207; }			#匹配客户端的地址
+		   zone "tedu.cn" IN { 
+			type master;
+			file "tedu.cn.nsd";
+		   };
+		};
+		view "abc" {
+		   match-clients { any; }			#匹配所有客户端地址 any:所有
+		   zone "tedu.cn" IN { 
+			type master;
+			file "tedu.cn.abc";
+		   };
+		};
+	2.建立地址库文件
+		vim /var/named/tedu.cn.nsd
+		   tedu.cn	NS  svr7
+		   svr7	A   192.168.4.7
+		   www	A   192.168.4.100
+		
+		vim /var/named/tedu.cn.abc
+		   tedu.cn	NS  svr7
+		   svr7	A   192.168.4.7
+		   www	A   1.2.3.4	
+	3.重启服务
+		systemctl restart named
+
+    验证：虚拟机A
+		nslookup svr7.tedu.cn  192.168.4.7
+	  虚拟机B
+		nslookup svr7.tedu.cn  192.168.4.7
+
+
+	·acl地址列表 用法：
+		vim /etc/named.conf
+		添加：
+	**	acl  myip { 192.168.4.207; 192.168.4.10; ...; };
+		view "nsd" {
+	**	   match-clients {  myip; }			#匹配客户端的acl地址
+		   zone "tedu.cn" IN { 
+			type master;
+			file "tedu.cn.nsd";
+		   };
+		};
+		
+
+    ###########################################################################################
+
+	
+	·RAID磁盘列阵
+	   ·RAID阵列概述：
+		 ·廉价冗余磁盘阵列
+		 
+
+	  ·RAID0： 条带模式				#用的最少，只能提高效率，没有容错功能
+		-同一个文档分散存放在不同磁盘		#最少需要2块磁盘
+		-并行写入以提高效率			
+
+	  ·RAID1： 镜像模式				#也用的少，不能提高效率，有容错功能
+	  	-一个文但复制成多份，分别写入不同磁盘		#最少需要2块磁盘
+		-多分拷贝提高可靠性，效率无提升		
+
+	  ·RAID5： 高性价比模式				#普遍用的较多，能提高效率，有容错功能
+		-相当于RAID0和RAID1的折中方案		#最少需要3块磁盘
+		-需要至少一块磁盘的容量来存放校验数据		
+
+	  ·RAID6： 高性价比/可靠模式					#银行用的较多，能提高效率，有容错功能
+		-相当于扩展的RAID5阵列，提供2份独立校验方案		#最少需要4块磁盘
+		-需要至少两块磁盘的容量来存放校验数据		
+
+	  ·RAID 0+1/RAID 1+0 :
+
+    ############################################################################################
+
+    ·进程管理
+
+	  -程序：静态的代码，占用硬盘存储空间
+	  -进程：动态的代码，占用cpu，内存
+		父进程 子进程  （树型结构）
+
+	  -进程的标识：PID  
+		
+	·查看进程树： pstree直接查看所有进程		** systemd：所有进程的父进程 PID 为 1
+
+	      -格式：pstree [选项] [PID或用户名]
+		·常用命令选项：
+			-a：显示完整的命令行
+			-p：列出对应PID编号
+		
+	·查看进程快照：
+
+		-格式：ps [选项]...
+		  ·常用命令选项：
+			-aux：显示当前终端所有进程（a）
+
+
+		·ps aux 操作：
+		   -列出正在运行的所有进程
+		用户  进程ID  %CPU %内存  虚拟内存  固定内存  终端  状态  起始时间  CPU时间  程序指令
+
+		·ps -elf 操作：
+		   -列出正在运行的所有进程
+		   -可以看到进程的父进程PID
+
+
+	·进程动态排名： top 交互式工具
+		
+		– 格式:top [-d 刷新秒数]
+			按大写的P  按CPU占有比例降序排列
+			按大写的M  按内存占有比例降序排列
+
+	·检索进程： pgrep 
+		
+		-格式：pgrep [选项]...  查询条件
+		
+		·常用命令：
+			-l：输出进程名，而不仅仅时 PID
+			-U:检索指定用户的进程
+			-t：检索指定终端的进程
+
+
+	·进程控制
+	     ·进程的前后台调度
+
+		·前台启动： 输入正常命令行，运行期间占用当前终端
+		·后台启动：在命令行末尾添加 "&" 符号，不占用当前终端 
+	-如：	sleep 800  &	#将程序放入后台运行
+		jobs： 查看后台进程
+		jobs -l：查看后台程序详细点
+		sleep 700		#执行 睡眠700秒   sleep 700：睡眠+700秒
+		^Z			#Ctrl +z  暂停，放入后台
+		bg 2：将后台编号为2的暂停进程继续运行
+		fg 2：将后台编号为2的进程恢复到前台
+		^C			#Ctrl +c  关闭当前程序
+		
+	·杀死进程：
+
+	   ·干掉进程的不同办法：
+		-Ctrl +c 组合键，中断当前命令程序（前台）
+
+		-kill [-9]	PID...（或后台任务编号）	#加 -9 直接强制杀死进程   不加 -9 进程死亡有个过程
+		-killall [-9] 进程名...
+	    #强制提出一个用户：
+		-killall -9 -u 用户名				#杀死该用户开启的所有进程（用户由登陆变成未登陆）
+
+		-pkill  查找条件（关键字...）		# 沾边就死 -如有带a的所有进程都死
+
+   ##############################################################################################
+	
+
+	·日志管理
+
+		·日志的功能：
+			-记录系统，程序运行中发生各种事情
+			-通过查看日志，了解及排除故障
+			-信息安全控制的“依据”
+
+		·内核及系统日志： /var/log/目录下
+		   主要用途：
+			/var/log/messages		#记录内核消息，各种服务的公共消息
+			/var/log/dmesg		#记录系统启动过程的各种消息
+			/var/log/cron		#记录与cron计划任务相关的消息
+			/var/log/maillog		#记录邮件收发相关的消息
+			/var/log/secure		#记录与访问限制相关的安全消息
+		·由系统服务rsyslog统一记录/管理：
+			-日志消息采用文本格式
+			-主要记录事件发生的时间，主机，进程，内容
+		    -如： Aug 29 13：19：48    svr7     dhclient:    DHCPACK from 192.168.8.1....	
+
+
+
+	·日志分析：
+
+		-tailf：实时跟踪的日志消息
+
+	   ·用户登陆分析
+
+		·users  who  w 命令
+		  -查看已登陆的用户信息，详细读不同
+
+		·last  lastb 命令
+		  -查看最近登陆成功/失败的用户信息
+		
+		   last -2 ：最近两条登录记录
+		   lastb -2 ：最近两条登录失败事件
+
+
+	·日志消息的优先级
+		·Linux内核定义的事件紧急程度
+			-分为0～7共8种优先级别
+			-其数值越小，表示对应事件越紧急/重要
+		0 EMERG（紧急）	会导致主机系统不可用的情况
+		1 ALERT（警告）	必须马上采取措施解决的问题
+		2 CRIT（严重）	比较严重的情况
+		3 ERR（错误）		
+		4 WARNING（提醒）	
+		5 NOTICE（注意）	
+		6 INFO（信息）	
+		7 DEBUG（调试）	
+
+
+	·使用journalctl工具
+		·提取由systemd-journal 服务搜集的日志
+		  -主要包括内核/系统日志，服务日志
+		·常见用法
+			-journalctl  | grep  关键字
+			-journalctl -u  服务名 [-p 优先级]		#journalctl -u httpd (-p 6)
+			-journalctl -n  消息条数
+			-journalctl --since=""
+
+
+___________________________________________________________________________
+————————————————————————————————————————————————————————————
+
+
+
+3月5号  day04
+
+	**  （DHCP由网络工程师搭建，自己要搭建得知会一声，因为搭两台会产生网络冲突！）
+
+	·DHCP自动分配网络参数服务
+		-动态主机配置协议，由IETF（Internet 网络工程师任务小组）组织指定，用来简化主机地址分配管理		
+
+	    ·主要分配以下入网参数
+		-IP地址/子网掩码/广播地址
+		-默认网关地址，DNS服务器地址
+
+	   ·DHCP工作过程以广播的方式进行，原理先到先得
+	   ·DHCP概述及原理
+		-服务端基本概念：
+			-组期：允许客户机租用IP地址的时间限期，单位为秒
+			-作用域：分配给客户机的IP地址所在的网段
+			-地址池：用来动态分配的IP地址的范围
+		
+	·DHCP配置：
+		a). 装包 dhcp
+			yum -y install dhcp
+		b).修改配置文件 /etc/dhcp/dhcpd.conf
+			vim /etc/dhcp/dhcpd.conf
+		#末行模式	 :r /usr/share/doc/dhcp*/dhcpd.conf.example
+		#删除剩下：	
+			subnet 192.168.4.0 netmask 255.255.255.0 {
+	 			range 192.168.4.10 192.168.4.100;
+				option domain-name-servers 8.8.8.8;
+				option routers 192.168.4.254;
+			}
+		c).重启dhcpd服务
+			systemctl restart dhcpd
+		
+    ##############################################################################################
+
+
+	·网络批量装机
+
+		·规模化：同时装配多台主机		**装配台数 跟交换机带宽有关（限制）
+		·自动化：装系统，配置各种服务
+		·远程实现：不需要光盘，U盘等物理安装介质
+
+	·PXE网络：
+		-预启动执行环境，在操作系统之前运行
+		-可用于远程安装
+	     ·工作模式
+		-PXE client集成在网卡的启动芯片中
+		-当计算机引导时，从网卡芯片中把PXE client 调入内存执行，获取PXE server配置，
+		 显示菜单，更具用户选择将远程引导程序下载到本机运行。
+	   ·客户机应具备的条件：
+		-网卡芯片必须支持PXE协议
+		-主板支持从网卡启动
+
+	   ·需要那些服务组件：
+		-DHCP服务，分配IP地址，定位引导程序
+		-TFTP服务，提供引导程序下载			#简单的文件传输协议
+		-HTTP服务（或FTP/NFS），提供yum安装源
+
+   ##############################################################################################
+
+
+	·搭建PXE网络装机服务器：
+
+	 一。 配置dhcp服务PEX的设置
+		1).修改配置文件/etc/dhcp/dhcpd.conf
+		    vim /etc/dhcp/dhcpd.conf
+		修改：
+			subnet 192.168.4.0 netmask 255.255.255.0 {
+			  range 192.168.4.10 192.168.4.100;
+			  option domain-name-servers 8.8.8.8;
+			  option routers 192.168.4.254;
+			  next-server 192.168.4.7;		#指定下一个服务器地址
+			  filename "pxelinux.0";			#指定下一个服务器下载的文件名字
+			}
+
+		2).重启dhcpd服务
+			systemctl restart dhcpd	
+
+		pxelinux.0 : 网卡引导文（安装说明书）二进制的文件，安装一个软件可以生成
+
+	 二。搭建TFTP服务
+		
+		tftp:简单文件传输协议   默认端口：69
+		默认共享的路径：/var/lib/tftpboot		
+
+		1).安装tftp-server软件
+			yum -y install tftp-server
+		2).启动tftp服务
+			systemctl restart tftp
+			systemctl enable tftp
+
+		3).部署pxelinux.0引导文件
+
+	**	   1·查看pxelinux.0的文件路径的三种方法：
+			yum  provides  */pxelinux.0
+			find / -name "pxelinux.0"
+			rpm -ql syslinux | grep pxelinux.0		#官方
+		   2.安装这个目录的软件syslinux
+			yum -y install syslinux
+
+		   ·把pxelinux.0 部署到tftp的共享路径下：
+			cp /usr/share/syslinux/pxelinux.0  /var/lib/tftpboot/
+			
+ 		4).部署默认菜单文件：
+	## pxelinux.0 -----> /var/lib/tftpboot/pxelinux.cfg/default   #菜单文件默认的存放路径和文件名
+			
+			 mkdir /var/lib/tftpboot/pxelinux.cfg
+				#创建默认固定路径的文件夹pxelinux.cfg
+			 cp /dvd/isolinux/isolinux.cfg /var/lib/tftpboot/pxelinux.cfg/default
+				#拷贝到默认文件夹路径下  ，文件名为default
+			 ls -ld /var/lib/tftpboot/pxelinux.cfg/default
+				#看权限
+			 chmod u+w /var/lib/tftpboot/pxelinux.cfg/default
+				#加所有者的写权限
+
+		5).部署 图形的模块 与图片
+			vesamenu.c32:图形的模块
+			splash.png：背景图片			
+
+		    cp /dvd/isolinux/vesamenu.c32  /dvd/isolinux/splash.png  /var/lib/tftpboot/
+
+		6).部署启动内核与驱动程序
+
+		    cp /dvd/isolinux/vmlinuz  /dvd/isolinux/initrd.img   /var/lib/tftpboot/
+
+		7).修改菜单文件
+
+		    vim /var/lib/tftpboot/pxelinux.cfg/default 
+			......
+			default vesamenu.c32		#默认加载图形的模块
+			timeout 600				#读秒时间为60秒
+
+			......
+			menu background splash.png		#指定背景图片
+			menu title NSD1801 PXE Server !	#标题信息
+
+			......
+			label linux
+				  menu label Install RHEL7	#显示菜单内容
+				  kernel vmlinuz			#加载内核
+				  append initrd=initrd.img 	#加载驱动
+			:wq
+
+	初步测试：
+	     新建一台全新的虚拟机，选择PXE网络引导安装，注意网络类型要选择private1
+
+
+	三。搭建httpd服务
+		
+		1).安装httpd软件包
+			yum -y install httpd
+
+		2).重启httpd服务，设置开机自启动
+			systemctl restart httpd
+			systemctl enable httpd
+
+		3).利用httpd服务共享光盘所有内容
+			mkdir /var/www/html/rhel7
+			mount /dev/cdrom /var/www/html/rhel7
+			firefox 192.168.4.7/rhel7
+
+	四。配置无人值守安装，应答文件的生成		
+		1).图形的工具，system-config-kickstart
+			yum -y install system-config-kickstart
+
+		2).运行图形程序 system-config-kickstart
+			system-config-kickstart
+		    第一步 ：查看软件包选择是否可用
+		    第二步 ：yum仓库的标识 必须为 [development]
+			  vim /etc/yum.repos.d/dvd.repo
+				[development]
+				.....
+
+			cat /root/ks.cfg
+
+	五。利用httpd服务共享ks.cfg应答文件
+
+		 cp /root/ks.cfg /var/www/html
+
+
+	六。修改默认菜单文件 /var/lib/tftpboot/pxelinux.cfg/default
+
+		vim   /var/lib/tftpboot/pxelinux.cfg/default
+			.......
+			append initrd=initrd.img ks=http://192.168.4.7/ks.cfg
+
+	七。总结
+
+		1. dhcp ------> ip地址，next-server,filename
+		2. tftp ------> pxelinux.0,pxelinux.cfg/default,vesamenu.c32,splash.png,
+				    vmlinuz,initrd,img,ks=http://192.168.4.7/ks.cfg
+		3. httpd -----> http://192.168.4.7/rhel7
+
+
+___________________________________________________________________________
+————————————————————————————————————————————————————————————
+
+
+3月7号 day05
+
+
+
+
+    ·rsync同步服务
+
+	·命令用法：   rsync [选项...] 源目录  目标目录	#与cp的用法相似
+
+	·同步与复制的差异：
+	  -复制：完全拷贝源到目标
+	  -同步：增量拷贝，只传输变化过的数据
+
+	·rsync操作选项：	#选项一般都是 -avz选项一起
+
+		-a：归档模式，相当于-rlptgoD选项的集合		#-a 是-r,-l,-p,-t,-o,-g,-D的集合体
+		-v：显示详细操作信息
+		-z：传输过程中启用压缩/解压
+		-n：测试同步过程，不做实际修改
+		--delete：删除目标文件夹内多余的文档
+
+	·本地同步：
+		- rsync -avz /本地目录1  本地目录2    #同步整个文件夹
+		- rsync -avz /本地目录1/  本地目录2   #只同步目录下的数据
+
+		rsync -avz --delete /本地目录1/  本地目录2    #让 1和2 内容一样， 把2中多的删除
+
+
+  #不同主机之间的同步
+    ·rsync+SSH同步	
+		
+	·与远程的SSH目录保持同步：		#与scp传输用法相似
+
+		-上行（上传）：rsync [...] user@host:远程目录   本地目录	
+		-下行（下载）：rsync [...] 本地目录  user@host:远程目录
+
+
+
+     #############################################################################################
+
+	
+    ·inotify实时同步
+
+
+  ***	一.SSH无密码的验证，部署公私钥
+
+		1·生成公私钥
+			ssh-keygen		#直接回车不用其它操作
+			ls /root/.ssh/
+
+		2.传递公钥
+			ssh-copy-id root@192.168.4.207		#把公钥传给pc207.tedu.cn  在/root/.ssh/下面
+
+		3.验证
+			ssh root@192.168.4.207		#远程pc207.tedu.cn	不用密码	
+	
+
+	二.监控目录内容的变化
+	
+		1.安装inotify-tools工具，监控目录内容变化
+
+		  1).安装gcc和make开发工具
+			yum -y install gcc make
+		  2).tar解压，释放源代码至指定目录
+			tar -xf /root/inotify-tools-3.13.tar.gz -C /opt
+		  3). ./configure 配置，指定安装目录/功能模块等选项
+			cd /opt/inotify-tools-3.13
+		     	./configure
+		  4).make编译，生成可执行的二进制程序文件
+			cd /opt/inotify-tools-3.13
+			make
+		  5).make install 安装，将编译号的文件复制到安装目录
+			cd /opt/inotify-tools-3.13
+			make install
+
+		inotifywait
+
+
+	    ·inotifywait [选项] 目标文件夹
+ 
+             ·常用命令选项					#一般组合 -mrq  -rq
+		-m，持续监控（捕获一个事件后不退出）
+		-r，递归监控，包括子目录及文件
+		-q，减少屏幕输出信息
+		-qq，不显示输出信息
+		-e，指定监视的modify，move，create，delete，attrib 等事件类别
+
+
+	三. 目录内容变化，立即同步  			#写个Shell脚本
+		#!/bin/bash
+		while [ 条件 ]
+		do
+			循环重复执行的语句
+		done
+
+	  vim /root/inotify.sh
+		#!/bin/bash
+		while inotifywait -rqq /root/hhh/  			#while 直接加条件  -rqq 不显示输出信息
+		do
+		  rsync -az --delete /root/hhh/ /root/aaa		#rsync同步时不加 -v 不显示详细信息
+		done
+
+
+
+
+    ##############################################################################################
+
+	·Cobbler装机平台（真机）
+
+	·基本概念：
+		-Cobbler时一款快速的网络系统部署工具
+		-集中管理所需服务，如DHCP，DNS，TFTP，Web
+		-Cobbler内部集成了一个镜像版本仓库
+		-Cobbler内部集成了一个ks应答文件仓库
+		-Cobbler还提供了包括yum源管理，Web界面管理，API接口，电源管理等功能
+
+
+
+	   一.解压cobbler.zip包，cobbler主程序，工具包等。
+		unzip /root/桌面/cobbler.zip -d /
+		ls /cobbler/
+
+	   二.为真机搭建永久的本地的Ynm仓库
+		1.挂载/iso/rhel-server-7.4-x86_64-dvd.iso
+		 mount /iso/rhel-server-7.4-x86_64-dvd.iso /dvd/
+
+		2.书写yum客户端文件
+		 vim /etc/yum.repos.d/nsd.repo
+			[development]
+			name=dvd
+			baseurl=file:///dvd
+			enabled=1
+			gpgcheck=0
+		 yum repolist
+
+		 3.为真机永久挂载/iso/CentOS-7-x86_64-DVD.....
+			
+			默认的iso文件系统： iso9660
+			/etc/rc.d/rc.local:每次开机运行
+
+			vim /etc/rc.d/rc.local
+		mount  /var/lib/libvirt/images/iso/CentOS-7-x86_64-DVD-1708.iso   /dvd 
+
+			reboot	#重启
+			yum repolist
+
+
+	  三.安装cobbler主程序，工具包等。
+
+		yum -y install /cobbler/*.rpm
+
+
+    ############################################################################################
+
+	·cobbler网络装机部署
+
+	
+	
+	1.安装软件 cobbler cobbler-web dhcp tftp-server pykickstart httpd  tftp-server 
+
+		 cobbler         #cobbler程序包
+		 cobbler-web     #cobbler的web服务包
+		 pykickstart     #cobbler检查kickstart语法错误
+		 httpd           #Apache web服务
+		 dhcp            #Dhcp服务
+		 tftp-server     #tftp服务
+
+
+	2.配置cobbler
+		vim /etc/cobbler/settings
+		修改为 next_server: 192.168.4.254 			#设置下一个服务器还为本机
+		将 server: 127.0.0.1 修改为 server: 192.168.4.254	#设置本机为cobbler服务器
+		将 manage_dhcp: 0 修改为 manage_dhcp: 1		#设置cobbler管理dhcp服务
+		将 pxe_just_once: 0 修改为 pxe_just_once: 1		#防止客户端重复安装操作系统
+
+
+	3.配置cobbler的dhcp
+		vim /etc/cobbler/dhcp.template
+	末行模式   :%s /192.168.1/192.168.4/g
+		
+		vim /etc/sysconfig/dhcpd
+		   DHCPDARGS=private1	#表示dhcp将只在private1 网络接口上提供DHCP服务
+		
+	4.绝对路径解压cobbler_boot.tar.gz  		#众多的引导文件
+
+		tar -tf /root/桌面/cobbler_boot.tar.gz 		
+		tar -xPf /root/桌面/cobbler_boot.tar.gz		#以据对路径解压 -P  解压完同名
+
+
+	5.启动相关服务
+		systemctl restart  httpd
+		systemctl enable httpd
+		systemctl restart cobblerd
+		systemctl enable cobblerd
+		systemctl restart tftp
+		systemctl enable tftp
+		systemctl restart rsyncd
+		systemctl enable rsyncd
+
+	6.同步刷新cobbler配置
+
+		cobbler sync		#同步刷新
+
+		firefox https://192.168.4.254/cobbler_web
+
+
+     ##########################################################################################
+
+	cobbler import  --path=挂载点   --name=导入系统命名（随意起）
+
+	·导入安装镜像的数据：
+
+		cobbler import --path=/dvd --name=CenOS7		#导入镜像数据
+
+		cobbler list						#查看有那些系统
+
+		cobbler profile report					#查看cobbler导入信息
+
+		killall -9 dnsmasq				#虚拟化服务会干扰DHCP服务
+
+
+	默认kickstart文件存放位置：/var/lib/cobbler/kickstarts/
+
+		cobbler list
+	修改kickstart文件：
+		cobbler profile edit --name=CentOS7.4-A --kickstart=/var/lib/cobbler/kickstarts/CentOS-7.3-x86_64.cfg
+
+		cobbler profile report
+		cobbler sync
+
