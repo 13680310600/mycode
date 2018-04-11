@@ -1,0 +1,479 @@
+回顾课程:
+   
+  DNS服务与Web服务
+
+一  DNS服务
+     作用: 正向解析  反向解析
+
+   DNS服务器分类: 主DNS服务器  从DNS服务器  根域DNS 缓存DNS服务器
+                          一级DNS服务器  二级DNS服务器  三级DNS服务器
+
+   DNS端口: tcp/udp53
+
+#####################################################
+ 虚拟机A
+    1.搭建DNS服务
+    2.负责解析tedu.cn ,此服务器为主DNS服务器 /etc/named.conf
+	options {
+        	directory       "/var/named";
+	};
+
+	zone "tedu.cn" IN {
+      	  type master;
+       	  file "tedu.cn.zone";
+	};
+
+    3.修改地址库文件 # vim  /var/named/tedu.cn.zone 
+	tedu.cn.	 NS       svr7
+	svr7            A	   192.168.4.7
+	www             A       192.168.4.7
+	tts             A       192.168.4.7
+####################################################
+
+二 Web服务
+
+   Apache 的httpd  默认监听的80
+     默认网页文件存放的根路径:/var/www/html
+
+ 虚拟Web主机: 一台Web服务器,提供多个不同的站点
+ 
+ 虚拟Web主机类型:
+               1.基于域名的虚拟Web主机
+               2.基于端口的虚拟Web主机
+               3.基于IP地址的虚拟Web主机
+
+
+
+[root@svr7 /]# vim /etc/httpd/conf.d/0-vhost.conf
+  <VirtualHost  *:80>
+   ServerName www.tedu.cn
+   DocumentRoot /var/www/nsd01
+  </VirtualHost>
+  <VirtualHost  *:80>
+   ServerName tts.tedu.cn
+   DocumentRoot /var/www/nsd02
+  </VirtualHost
+
+[root@svr7 /]# mkdir /var/www/nsd01
+[root@svr7 /]# mkdir /var/www/nsd02
+
+# echo I Love Linux > /var/www/nsd01/index.html
+# echo I Love dc > /var/www/nsd02/index.html
+
+[root@svr7 /]# systemctl restart httpd
+#####################################################
+rsync 同步服务
+
+    复制: 源所有数据
+    同步: 只传输变化数据
+
+• 命令用法
+– rsync [选项...]   源目录     目标目录
+
+
+• 本地同步
+– rsync [选项...] 本地目录1 本地目录2
+– rsync [选项...] 本地目录1/ 本地目录2
+
+[root@svr7 ~]# mkdir /todir
+[root@svr7 ~]# rsync -a /boot /todir   //同步整个文件夹
+[root@svr7 ~]# rsync -a /boot/ /todir/ //只同步目录下的数据
+
+
+• rsync操作选项
+ – -n:测试同步过程,不做实际修改
+ – --delete:删除目标文件夹内多余的文档
+ – -a:归档模式,相当于-rlptgoD
+ – -v:显示详细操作信息
+ – -z:传输过程中启用压缩/解压
+     
+
+##########################################
+[root@svr7 /]# rm -rf /opt/*
+[root@svr7 /]# rm -rf /mnt/*
+[root@svr7 /]# cp /etc/passwd /opt
+[root@svr7 /]# touch /opt/1.txt
+[root@svr7 /]# ls /opt/
+[root@svr7 /]# ls /mnt/
+
+[root@svr7 /]# rsync -avz /opt/   /mnt
+[root@svr7 /]# ls /opt/
+[root@svr7 /]# ls /mnt/
+
+[root@svr7 /]# touch /opt/2.txt
+
+[root@svr7 /]# rsync -avz /opt/   /mnt
+[root@svr7 /]# ls /opt/
+[root@svr7 /]# ls /mnt/
+######################################################
+  --delete : 删除目标路径比源目录多余的文档
+
+[root@svr7 /]# rsync -avz --delete  /opt/   /mnt
+[root@svr7 /]# ls  /opt/  /mnt
+
+
+[root@svr7 /]# touch /mnt/nsd.txt
+[root@svr7 /]# ls  /opt/  /mnt
+
+
+[root@svr7 /]# rsync -avz --delete  /opt/   /mnt
+[root@svr7 /]# ls  /opt/  /mnt
+#####################################################
+  远程同步   rsync+ssh
+ • 服务端要求
+  – 开启sshd服务,并提供授权的用户、密码 
+
+命令格式:  
+    rsync 选项   /路径/目录/     用户名@对方IP地址:/路径/对方目录
+    rsync 选项   用户名@对方IP地址:/路径/对方目录/  /路径/目录/   
+虚拟机A:
+ # rsync -avz --delete  /opt/   root@192.168.4.207:/mnt/
+
+虚拟机B:
+ #  ls  /mnt
+
+######################################################
+ 实时的远程同步
+
+虚拟机A:
+ # rsync -avz --delete  /opt/   root@192.168.4.207:/mnt/
+
+虚拟机B:
+ #  ls  /mnt
+
+
+一  公钥 私钥  实现的虚拟机A与虚拟机B 验证同步 无需密码
+ 
+  1.虚拟机A生成公钥 私钥  
+ [root@svr7 /]# ssh-keygen      #一路回车
+ [root@svr7 /]# ls /root/.ssh/
+
+ [root@svr7 /]# ssh-copy-id  root@192.168.4.207  #拷贝公钥
+
+ [root@svr7 /]# ssh root@192.168.4.207
+
+ [root@pc207 ~]# exit   #退出到B
+
+二  安装一个软件,实时监控一个目录内容,有变化会报告
+
+步骤1:将该inotify-tools-3.13.tar.gz上传 虚拟机A
+ 真机上操作:
+# scp /root/桌面/tools/inotify-tools-3.13.tar.gz root@192.168.4.7:/root/
+步骤2:安装gcc和make开发工具
+[root@svr7 /]# yum  -y  install  gcc   make
+步骤3:tar解包,释放源代码至指定目录
+ # tar -xf /root/inotify-tools-3.13.tar.gz -C(大写) /opt/
+ # ls /opt/
+步骤4:  ./configure 配置,指定安装目录/功能模块等选项
+       # cd  /opt/inotify-tools-3.13/
+       # ./configure  
+步骤5:make 编译,生成可执行的二进制程序文件
+       # make
+步骤6:make install 安装,将编译好的文件复制到安装目录
+       # make install
+	# which inotifywait 
+	# ls /usr/local/bin/inotifywait
+#############################################
+inotifywait监控
+• 基本用法
+– inotifywait  [选项]  目标文件夹
+
+• 常用命令选项
+ – -m,持续监控(捕获一个事件后不退出)
+ – -r,递归监控、包括子目录及文件
+ – -q,减少屏幕输出信息
+– -e,指定监视的 modify、move、create、delete、attrib事件类别
+
+
+
+   inotifywait------> while 
+  
+   rsync -avz --delete  /opt/   root@192.168.4.207:/mnt/
+
+ 最容易形成死循环
+
+   while [条件判断]
+    do 
+            循环执行语句
+    done
+
+
+[root@svr7 /]# vim  /root/1.sh
+ #!/bin/bash
+ i=0
+
+ while  [  $i  -le 10  ]
+ do
+    i=`expr   $i   +   1`
+    echo  $i
+ done
+
+[root@svr7 /]# chmod  +x  /root/1.sh
+[root@svr7 /]# /root/1.sh
+
+#################################################
+
+ 三  书写实时同步的脚本
+
+[root@svr7 /]# vim  /root/rsync.sh
+
+ #!/bin/bash
+ dir=/opt/
+ while   inotifywait  -rqq   $dir
+ do
+   rsync -az --delete  $dir   root@192.168.4.207:/mnt/
+ done 
+
+[root@svr7 /]# chmod +x /root/rsync.sh
+
+[root@svr7 /]# /root/rsync.sh
+
+######################################################
+ DNS的分离解析(视图解析)
+• 当收到客户机的DNS查询请求的时候
+– 能够区分客户机的来源地址
+– 为不同类别的客户机提供不同的解析结果(IP地址)
+
+
+   不同的客户端区解析同一个域名,解析结果不同
+
+  前提: 客户端的分类要合理 , 所有的客户端都要找到自己的分类
+          一旦使用view功能,所有的zone都必须在view中
+
+ view  "haha"  {
+   match-clients  {  192.168.4.7;  }
+   zone "12306.cn"   {
+    ......12306.cn.zone;                                               
+   }; };
+
+ view  "xixi"   {
+   match-clients  {  any;  }
+   zone  "12306.cn"   {
+    ...... 12306.cn.abc
+  }; };
+
+
+
+  客户端192.168.4.207---->www.tedu.cn----->1.1.1.1
+  客户端非192.168.4.207---->www.tedu.cn----->2.2.2.2
+
+ options {
+        directory       "/var/named";
+ };
+ view   "haha"  {
+  match-clients  {  192.168.4.207;  };
+  zone  "tedu.cn"   IN  {
+        type  master;
+        file  "tedu.cn.haha";
+   };
+ };
+ view   "xixi"  {
+  match-clients  {  any; };
+  zone  "tedu.cn"  IN {
+        type  master;
+        file  "tedu.cn.xixi";
+    };
+  };
+
+
+– 根据view调用的顺序,“匹配即停止”    
+   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

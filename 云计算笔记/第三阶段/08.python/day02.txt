@@ -1,0 +1,251 @@
+语法格式
+while 判断:
+		指令1
+		指令2
+		...
+
+用python计算1..100的和
+1+2+3+4+5+6...+100
+	提示1：变量控制循环次数i
+	提示2：变量求和sum
+    提示3：i+=1 （i=i+1)等同于shell中的i++
+
+#!/usr/bin/python
+#coding:utf-8
+i=1
+sum=0
+while i <= 100:
+    sum=sum+i
+    i+=1
+print "总和是:",sum
+print "总和是%d" %sum
+
+备注：%s代表字符(string)，%d代表数字(digit)
+
+
+for和while都支持break和continue
+
+读取用户输入，直到输入tom为止
+#!/usr/bin/python
+#coding:utf-8
+
+while True:
+		user=raw_input("请输入内容:")
+		if  user == 'tom':
+				break
+
+
+用python计算1..100中2的被数的和
+2+4+6+8+10+12....
+	提示1：变量控制循环次数i
+	提示2：变量求和sum
+    提示3：i+=1 （i=i+1)等同于shell中的i++
+	提示4：(i%2)==0  判断是否整除
+	提示5：需要continue
+
+i=0
+sum=0
+while i <= 100:
+    i+=1
+    if (i%2!=0):  
+        continue
+    sum=sum+i
+print "总和是:",sum
+
+
+
+语法格式：
+for  变量  in  值:
+		指令1
+		指令2
+
+for  i  in  range(1,11):
+		print "我是%d" %i
+else:
+		print "ok"
+
+提示:range(1,11)自动生成1..10的数字
+提示:range(1,11,2)自动生成1..10的数字(步长为2)
+
+range(100000)
+xrange(100000)
+
+
+
+打印斐波那契数列：0  1   1   2   3   5   8  ...
+
+#!/usr/bin/python
+#coding:utf-8
+
+fibs=[0,1]
+n=int(raw_input("请输入几组:"))
+for i in range(n-2):
+    fibs.append(fibs[-1]+fibs[-2])
+print fibs
+
+
+列表解析【快速生成列表变量】
+['192.168.4.%d'%i for i in range(1,255)]
+
+[ 10+i for i in range(100)]
+
+
+
+文件操作：
+open('文件名','权限')
+
+权限列表：
+r 以读方式打开(文件不存在则报错)
+w 以写方式打开(文件存在则清空,不存在则创建)
+a 以追加模式打开(必要时创建新文件)
+r+ 以读写模式打开(参见r)
+w+ 以读写模式打开(参见w)
+a+ 以读写模式打开(参见a)
+
+abc=open('/etc/hosts')	打开文件
+abc.readline()					读取文件中的一行
+abc.readline(6)					读取文件中的6个字符
+abc.read()							读取文件的剩余全部
+abc.seek(0)							重新定位文件的位置
+abc.close()							关闭文件
+
+data=open('/root/new.txt','w')	新建文件
+data.writelines("hello the world\n")   写入数据（在内存）
+data.writelines("ni chi le ma\n")			写入数据（在内存）
+data.flush()					写入硬盘
+data.close()					关闭文件
+
+使用循环读取文件内容：
+data=open('/etc/hosts')
+for i in  data:
+		print i
+
+
+模拟cp操作，将/root/new.txt复制为new2.txt
+		提示1：循环读取第一个文件每行
+		提示2：将读取出来的内容写入第二个文件
+data1=open('/root/new.txt')
+data2=open('/root/new2.txt','w')
+for  i  in  data1:
+    data2.writelines(i)
+data1.close()
+data2.close()
+
+
+
+
+Python调用shell命令:
+
+import subprocess
+subprocess.call('ls /',shell=True)
+
+
+++++++++++++++++++++++++++++++++++
+
+
+Python定义函数格式
+define定义
+
+def  函数名称(形参):
+		指令1
+		指令2
+
+Python调用函数格式
+函数名(实参)
+
+def   ad():								|
+     print 3+4						|-->定义函数
+												     |
+ad()											--->调用函数
+tt=ad()
+print tt									---->返回None
+
+
+
+def ad()
+		i=3+4
+		return i						--->返回数据
+
+tt=ad()									--->tt的值是7
+print tt
+
+
+def  ad(x,y):			x和y形式参数
+		print x+y
+		print x*y
+
+ad(1,2)						1和2实际参数
+ad(8,5)
+ad(7,9)
+
+默认参数
+def  ad(x=3,y=5):			x=3和y=5是默认参数
+		print x+y
+
+ad()									使用默认参数3和5
+ad(8,15)							使用自定义参数8和15
+
+
+如何取读取python脚本的参数
+#!/usr/bin/python
+#coding:utf-8
+
+import sys
+print sys.argv
+print sys.argv[0]
+print sys.argv[1]
+print sys.argv[2]
+print len(sys.argv)
+
+
+
+
+
+
+
+#vim  tt.py						新建模块
+def ad(x=3,y=5):
+		print x+y
+
+def reduce(i,j):
+		print i-j
+
+#python
+import tt							调用模块
+tt.ad()								使用模块中的函数
+tt.ad(8,9)						使用模块中的函数
+tt.reduce()						失败
+tt.reduce(8,2)
+
+#python
+from tt  import  ad   从abc模块中导入ad功能
+ad()
+
+
+import string
+string.digits
+string.letters
+
+生成8为随机密码
+#!/usr/bin/python
+#coding:utf-8
+
+import random,string
+passwd=''
+mypass=string.digits+string.letters
+for i in range(8):
+    passwd=passwd+random.choice(mypass)
+
+print passwd
+
+
+
+
+
+
+
+
+
+
+
+

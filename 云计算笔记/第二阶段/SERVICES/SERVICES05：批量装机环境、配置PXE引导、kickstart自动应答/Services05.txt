@@ -1,0 +1,462 @@
+回顾课程:
+   用户管理与权限管理
+
+  用户唯一标识:  UID 
+  管理员的用户UID: 0
+
+[root@svr7 ~]# man useradd  查询-u选项帮助
+[root@svr7 ~]# useradd -u  0  -o  abc
+
+ 组管理
+[root@svr7 ~]# useradd nsd01
+[root@svr7 ~]# groupadd tarena
+[root@svr7 ~]# id nsd01
+
+[root@svr7 ~]# gpasswd -a nsd01  tarena
+
+[root@svr7 ~]# id nsd01
+
+[root@svr7 ~]# groupadd student
+[root@svr7 ~]# gpasswd -a nsd01  student
+
+[root@svr7 ~]# id nsd01
+
+Linux 创建一个用户会修改那些配置文件
+    /etc/passwd    用户基本信息
+    /etc/shadow    用户密码信息
+    /etc/group     组的基本信息
+    /etc/gshadow   组的密码信息
+
+  默认用户家目录下,配置文件模版目录
+[root@svr7 ~]# ls -A /etc/skel/
+  每创建一个用户,Linux系统都会从/etc/skel目录中,把所有内容复制到新键用户的家目录下
+
+[root@svr7 ~]# ls -A /etc/skel/
+
+[root@svr7 ~]# touch /etc/skel/hahaxixi.txt
+[root@svr7 ~]# ls -A /etc/skel/
+
+[root@svr7 ~]# useradd nsd03
+[root@svr7 ~]# ls -A /home/nsd03
+
+ 用户修改权限命令
+   chmod
+ 用户修改归属关系
+   chown
+
+ 附加权限  SGID
+ 让新增的子目录,自动继承父目录的所属组身份
+
+#####################################################
+     路由器 与 交换机 区别?
+         1.作用: 
+               交换机 组建局域网
+               路由器 解决不同 网络 之间通信
+         2.识别的地址不同: 
+               交换机 MAC地址表   识别MAC地址
+               路由器 路由表  识别IP地址
+         3.工作的层次: 
+               交换机 数据链路层
+               路由器 网络层
+         4.未知数据判断: 
+               交换机 广播未知数据帧
+               路由器 丢弃
+
+######################################################
+
+网络装机的优势
+• 规模化:同时装配多台主机
+• 自动化:装系统、配置各种服务
+• 远程实现:不需要光盘、U盘等物理安装介质
+
+################################################
+
+DHCP服务器
+• Dynamic Host Configuration Protocol
+– 动态主机配置协议,由 IETF(Internet 网络工程师任
+务小组)组织制定,用来简化主机地址分配管理
+
+• 主要分配以下入网参数
+– IP地址/子网掩码/广播地址
+–  默认网关地址、DNS服务器地址
+
+ DHCP概述及原理 : 所有的会话交互都是 广播  进行的
+  客户端:先到先得
+
+         一个局域网只能有一台DHCP服务器
+
+
+虚拟机A搭建DHCP服务器
+1.装包dhcp
+[root@svr7 ~]# yum -y install dhcp
+
+2.修改配置文件/etc/dhcp/dhcpd.conf
+[root@svr7 ~]# vim  /etc/dhcp/dhcpd.conf
+   :r  /usr/share/doc/dhcp*/dhcpd.conf.example  #读入文件
+
+subnet 192.168.4.0  netmask  255.255.255.0  { #分配网段
+  range  192.168.4.10  192.168.4.80;          #地址池
+  option domain-name-servers  192.168.4.7;    #分配DNS地址
+  option routers  192.168.4.254;              #分配网关地址
+  default-lease-time 600;              #IP地址租用时间(了解)
+  max-lease-time 7200;
+  }
+
+ :%s /192.168.20/192.168.4/g   #全文查找替换
+
+3.重起dhcpd服务
+[root@svr7 ~]# systemctl  restart  dhcpd 
+[root@svr7 ~]# systemctl  enable  dhcpd 
+###################################################
+
+   机器 引导项 :匹配及停止
+
+                   1.本地硬盘
+                   2.光驱设备
+           3.U盘 移动存储设备
+           4.PXE网络 进行广播
+################################################
+
+• 需要哪些服务组件?
+ – DHCP服务,分配IP地址、定位引导程序
+ – TFTP服务,提供引导程序下载
+ – FTP服务,提供yum安装源
+##################################################
+一  配置DHCP增加PXE的配置
+1.修改配置文件/etc/dhcp/dhcpd.conf
+[root@svr7 ~]# vim  /etc/dhcp/dhcpd.conf
+
+  next-server  192.168.4.7;    #指定下一个服务器IP地址
+  filename   "pxelinux.0";     #指明网卡引导文件名称
+}  
+
+2.重起dhcpd服务
+
+################################################
+二   tftp服务器的搭建
+
+     pxelinux.0 : 网卡引导文件名称  (安装说明书) 二进制文件
+        安装一个软件可以自动生成pxelinux.0  
+
+   tftp: 简单的文件传输协议    端口:69
+     默认共享的路径: /var/lib/tftpboot/
+
+     服务端软件:tftp-server
+     客户端软件:tftp
+   
+ 1.安装一个软件包tftp-server
+ [root@svr7 ~]# yum -y install tftp-server
+
+ 2.启动tftp服务
+ [root@svr7 ~]# systemctl restart tftp
+ [root@svr7 ~]# systemctl enable tftp
+
+ 3.得到 pxelinux.0 引导文件
+ # yum provides  */pxelinux.0    #查询仓库中那个包产生此文件
+ # yum -y install  syslinux      #安装软件
+ # rpm -ql  syslinux             #查看软件安装清单
+ # rpm -ql  syslinux | grep pxelinux.0   
+
+ # ls /usr/share/syslinux/pxelinux.0 
+
+ 4.部署pxelinux.0引导文件
+ # cp  /usr/share/syslinux/pxelinux.0  /var/lib/tftpboot/
+ # ls  /var/lib/tftpboot/
+
+ 5.部署菜单文件, pxelinux.0---->下载一个菜单文件
+  
+  鼠标图形将光盘放入光驱
+ # mount /dev/cdrom  /mnt/
+
+ # ls /mnt/
+
+ # mkdir /var/lib/tftpboot/pxelinux.cfg/
+
+ # cp /mnt/isolinux/isolinux.cfg /var/lib/tftpboot/pxelinux.cfg/default
+
+ # ls -l /var/lib/tftpboot/pxelinux.cfg/default
+ # chmod 644 /var/lib/tftpboot/pxelinux.cfg/default
+ # ls -l /var/lib/tftpboot/pxelinux.cfg/default
+
+ 6.修改菜单文件, 
+ # vim /var/lib/tftpboot/pxelinux.cfg/default
+  ......
+  menu background splash.png
+  menu title NSD1711 PXE Server
+  ......
+label linux
+  menu label Install Red Hat Enterprise Linux 7.2
+  menu default      #读秒结束后默认选择的菜单
+  kernel vmlinuz
+  append initrd=initrd.img 
+
+
+ 7.部署 图形的模块  启动内核   内核所需驱动
+    initrd.img (内核所需驱动程序)
+    vmlinuz    (启动内核)
+    vesamenu.c32  (图形的模块 )
+
+ # cp /mnt/isolinux/initrd.img 
+      /mnt/isolinux/vmlinuz  
+      /mnt/isolinux/vesamenu.c32  /var/lib/tftpboot/
+
+  pxelinux.0---->pxelinux.cfg/default
+  default----> vesamenu.c32  vmlinuz  initrd.img
+
+##################################################
+ 简单的测试
+
+##################################################
+
+三 搭建FTP服务
+ 1. 安装vsftpd软件包
+[root@svr7 ~]# yum -y install vsftpd
+
+ 2. 启动vsftpd
+[root@svr7 ~]# systemctl restart vsftpd
+[root@svr7 ~]# systemctl enable vsftpd
+
+ 3. 让光盘内容出现  /var/ftp/rhel7
+[root@svr7 ~]# mkdir  /var/ftp/rhel7
+[root@svr7 ~]# ls  /var/ftp/rhel7
+[root@svr7 ~]# mount /dev/cdrom /var/ftp/rhel7
+[root@svr7 ~]# ls  /var/ftp/rhel7
+
+[root@svr7 ~]# firefox  ftp://192.168.4.7   #测试
+
+#####################################################
+无人值守安装,生成应答文件
+ 
+ 1.安装 图形生成应答文件工具
+[root@svr7 ~]# yum -y install system-config-kickstart
+
+ 2. 运行生成应答文件工具
+[root@svr7 ~]# system-config-kickstart
+
+   系统是RHEL7.2 有一个漏洞  首先要看"软件包选择"是否可用
+
+3.修改Yum仓库的标识 
+[root@svr7 ~]# vim /etc/yum.repos.d/rhel7.repo    
+   与Yum仓库有关, Yum仓库的标识  [development]
+[root@svr7 ~]# yum clean all  #清空Yum的缓存
+
+[root@svr7 ~]# system-config-kickstart
+     首先要看"软件包选择"是否可用
+
+[root@svr7 ~]# ls /root/ks.cfg 
+/root/ks.cfg
+[root@svr7 ~]# vim /root/ks.cfg
+
+#####################################################
+ 1.通过FTP共享ks.cfg文件
+[root@svr7 ~]# cp  /root/ks.cfg   /var/ftp
+
+2.修改菜单文件指定ks.cfg文件
+[root@svr7 ~]# vim  /var/lib/tftpboot/pxelinux.cfg/default 
+......
+ label linux
+   menu label Install Red Hat Enterprise Linux 7.2
+   menu default
+   kernel vmlinuz
+   append initrd=initrd.img ks=ftp://192.168.4.7/ks.cfg
+
+#######################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

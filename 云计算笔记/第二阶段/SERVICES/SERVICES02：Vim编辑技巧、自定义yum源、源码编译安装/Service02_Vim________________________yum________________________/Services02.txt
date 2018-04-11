@@ -1,0 +1,374 @@
+ clone-vm7
+
+  虚拟机C:
+   1.配置eth0的IP地址 192.168.4.200/24
+   2.真机运程管理
+   3.修改主机名要求永久有效 /etc/hostname  pc0.tedu.cn
+   4.永久修改SELinux状态 Permissive
+   5.修改防火墙默认区域为trused 
+   6.请以真机Web服务器为Yum源,搭建虚拟机Yum仓库
+
+########################################################
+
+      ftp://172.40.50.114
+
+########################################################
+扩展的几个应用
+
+ /boot         存放系统引导必需的文件,包括内核、启动配置
+ /bin、/sbin   存放各种命令程序
+ /dev          存放硬盘、键盘、鼠标、光驱等各种设备文件
+ /etc          存放Linux系统及各种程序的配置文件
+ /root、/home/ 用户名 分别是管理员root、普通用户的默认家目录
+ /var          存放日志文件、邮箱目录等经常变化的文件
+ /proc         存放内存中的映射数据,不占用磁盘
+ /tmp          存放系统运行过程中使用的一些临时文件
+
+#########################################################
+• 权限的数值化
+– 基本权限:r = 4,w = 2,x = 1
+
+• 采用数值形式设置权限
+– chmod [-R] nnn 文档...
+– chmod [-R] xnnn 文档...
+
+[root@svr7 ~]# mkdir /nsd01
+[root@svr7 ~]# ls -ld /nsd01
+
+[root@svr7 ~]# chmod u=r /nsd01
+[root@svr7 ~]# ls -ld /nsd01
+
+[root@svr7 ~]# chmod 755 /nsd01/
+[root@svr7 ~]# ls -ld /nsd01
+
+[root@svr7 ~]# chmod 007 /nsd01
+[root@svr7 ~]# ls -ld /nsd01
+
+[root@svr7 ~]# chmod  700 /nsd01
+[root@svr7 ~]# ls -ld /nsd01
+
+###################################################
+历史命令
+• 管理/调用曾经执行过的命令
+– histroy:查看历史命令列表
+– history -c:清空历史命令
+– !n:执行命令历史中的第n条命令
+– !str:执行最近一次以str开头的历史命令
+
+• 调整历史命令的数量
+[root@svr7 ~]# vim /etc/profile
+HISTSIZE=1000
+
+####################################################
+
+• du,统计文件的占用空间
+– du [选项]... [目录或文件]...
+
+– -s:只统计每个参数所占用的总空间大小
+– -h:提供易读容量单位(K、M等)
+
+[root@svr7 ~]# du -sh /boot/ /etc/pki/
+130M  /boot/
+1.5M  /etc/pki/
+
+################################################
+• date,查看/调整系统日期时间
+– date +%F
+
+– date +"%Y-%m-%d %H:%M:%S"
+
+– date -s "yyyy-mm-dd HH:MM:SS"
+
+################################################
+ 准备YUM源
+
+自定义Yum仓库
+
+1.将自己从网络中下载的rpm包,搭建为Yum仓库的源
+2.将真机上的tools目录,传递到虚拟机A 192.168.4.7
+
+   scp  -r  /本地路径/目录        用户名@IP地址:/目标路径/
+
+ # scp -r /root/桌面/tools/       root@192.168.4.7:/
+  root@192.168.4.7's password: 
+
+3. 生成仓库数据文件
+[root@svr7 ~]# createrepo /tools/other/
+[root@svr7 ~]# ls /tools/other/
+
+4.书写客户端文件
+[root@svr7 ~]# vim /etc/yum.repos.d/rhel7.repo
+  [rhel7]
+  name=rhel7
+  baseurl=http://192.168.4.254/rhel7
+  enabled=1
+  gpgpcheck=0
+  [other]
+  name=other
+  baseurl=file:///tools/other
+  enabled=1
+  gpgpcheck=0
+[root@svr7 ~]# yum repolist 
+
+
+ 查看rpm包的安装请单:
+[root@svr7 ~]# rpm -ql sl
+
+[root@svr7 ~]# yum -y install oneko
+[root@svr7 ~]# oneko &                #放入后台运行
+[root@svr7 ~]# oneko &
+[root@svr7 ~]# killall oneko          #杀死所有oneko程序
+
+[root@svr7 ~]# yum -y install cmatrix
+[root@svr7 ~]# cmatrix
+
+##########################################################
+ i节点:存放在分区表, 作用唯一标识文件  编号
+
+ln,创建软连接 符号连接(快捷方式)
+  – 软连接 --> 原始文档 --> i节点 --> 文档数据
+ – ln -s  原始文件或目录    软连接文件
+ 若原始文件或目录被删除,连接文件将失效
+ 软连接可存放在不同分区/文件系统
+
+• ln,创建硬连接(快捷方式)
+  – 硬连接 --> i节点 --> 文档数据
+ – ln  原始文件     硬连接文件
+ 若原始文件被删除,连接文件仍可用
+ 硬连接与原始文件必须在同一分区/文件系统
+
+[root@svr7 ~]# rm -rf /opt/*
+[root@svr7 ~]# echo 123 > /opt/A.txt
+[root@svr7 ~]# cd /opt/
+[root@svr7 opt]# ls
+[root@svr7 opt]# ln -s /opt/A.txt  /opt/B.txt  #软连接
+[root@svr7 opt]# ls 
+A.txt  B.txt
+[root@svr7 opt]# ln /opt/A.txt   /opt/C.txt   #硬连接
+[root@svr7 opt]# ls
+A.txt  B.txt  C.txt
+[root@svr7 opt]# cp /opt/A.txt  /opt/D.txt    #复制
+[root@svr7 opt]# ls -i                        #查看i节点
+
+[root@svr7 opt]# rm -rf A.txt
+[root@svr7 opt]# ls
+
+####################################################
+  zip归档工具,跨平台的
+
+• 归档+压缩操作
+– zip [-r] 备份文件.zip 被归档的文档...
+
+• 释放归档+解压操作
+– unzip 备份文件.zip [-d 目标文件夹]
+
+ # zip -r /opt/test.zip  /etc/passwd  /boot/  /home/
+ #  ls  /opt
+
+ # unzip  /opt/test.zip  -d  /mnt
+
+######################################################
+通常 会提供“--help”帮助选项
+
+
+• man,格式化手册阅读工具
+– 按 上 、 下 、 PgUp 、PgDn 键滚动及翻页
+– 按 q 键退出
+– 按 / 键向后查找关键词(n、N切换)
+– 按 G 到全文的最后
+   
+   5:代表配置文件帮助信息
+
+[root@svr7 ~]# man  5  passwd
+
+#####################################################
+
+vim编辑技巧
+
+  命令模式操作
+
+[root@svr7 opt]# cp /etc/passwd  /opt/abc
+[root@svr7 opt]# vim /opt/abc 
+
+  Home 键 或 ^、数字 0    跳转至行首
+  End 键 或“$”键              跳转到行尾
+  gg                  跳转到文件的首行
+  G                   跳转到文件的末尾行
+
+复制/粘贴/删除
+  yy、8yy         复制光标处的一行、8行
+   粘贴 p           粘贴到光标处之后
+  x 或 Delete键      删除光标处的单个字符
+  dd、3dd	    删除光标处的一行、3行
+  d^              从光标处之前删除至行首
+  d$              从光标处删除到行尾
+  C(大写)         从光标处删除到行尾,并且进入插入模式
+
+
+   /root	  向后查找字符串“root”
+   n、N 	  跳至后/前一个结果
+   u 		  撤销最近的一次操作
+   Ctrl + r     取消前一次撤销操作
+   ZZ 		  保存修改并退出
+
+##################################################
+ 末行模式操作
+  
+ :q!                  放弃已有更改后强制退出
+ :wq 或 :x             保存已有修改后退出
+ :r /etc/filesystems  读入其他文件内容
+
+[root@svr7 opt]# echo 123 > /opt/1.txt
+[root@svr7 opt]# echo abc > /opt/2.txt
+[root@svr7 opt]# cat /opt/2.txt
+abc
+[root@svr7 opt]# vim /opt/2.txt
+              
+            :r  /opt/1.txt     #读入其他文本文件内容  
+            :r  /etc/passwd 
+
+
+
+  :s/root/admin         替换 光标所在的行 第一个“root”
+  :s/root/admin/g       替换 光标所在的行 所有的“root”
+  :1,9 s/root/admin/g   替换 第1-9行 所有的“root”
+  :% s/root/admin/g     替换 全文  所有的“root”
+
+
+  :set  nu|nonu    显示/不显示行号
+  :set  ai|noai    启用/关闭自动缩进
+
+
+###################################################
+
+ 源码编译安装
+
+
+• 主要优点
+– 获得软件的最新版,及时修复bug
+– 软件功能可按需选择/定制,有更多软件可供选择
+– 源码包适用各种平台
+
+
+  rpm包   yum   rpm -ivh
+
+
+        gcc和make
+   源码包 ------------------> 可以执行文件--------->运行安装
+
+步骤1:安装gcc和make开发工具
+[root@svr7 /]# yum  -y  install  gcc   make
+[root@svr7 /]# rpm  -q  gcc
+ gcc-4.8.5-4.el7.x86_64
+[root@svr7 /]# rpm  -q  make
+ make-3.82-21.el7.x86_64
+
+步骤2:tar解包,释放源代码至指定目录
+ # rm -rf /opt/*
+ # tar -xf /tools/inotify-tools-3.13.tar.gz -C(大写) /opt/
+ # ls /opt/
+
+步骤3:  ./configure 配置,指定安装目录/功能模块等选项
+                           作用1: 检测系统是否安装了gcc
+                           作用2: 指定安装目录/功能模块等选项
+       # cd  /opt/inotify-tools-3.13/
+       # ./configure   --prefix=/mnt/myrpm    #指定安装位置
+常见的提示:gcc没有安装
+checking for gcc... no
+checking for cc... no
+checking for cl.exe... no
+
+
+步骤4:make 编译,生成可执行的二进制程序文件
+       # cd  /opt/inotify-tools-3.13/
+       # make
+
+步骤5:make install 安装,将编译好的文件复制到安装目录
+       # cd  /opt/inotify-tools-3.13/
+       # make install
+	# ls /mnt/
+	# ls /mnt/myrpm/
+	# ls /mnt/myrpm/bin/
+
+#######################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

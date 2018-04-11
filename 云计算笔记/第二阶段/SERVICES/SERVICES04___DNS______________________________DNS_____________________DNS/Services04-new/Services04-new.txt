@@ -1,0 +1,393 @@
+回顾课程:
+
+分区规划:
+
+    物理磁盘------>划分分区------>格式化------>挂载使用
+
+一 划分分区
+  
+   MBR:  分区类型: 主分区   扩展分区  逻辑分区
+   
+   GPT:  128主分区
+
+ 划分分区工具:   fdisk  parted 
+
+/dev/vdb
+   划分分区:   3个10G主分区   1个扩展分区     1个10G逻辑分区
+
+[root@svr7 ~]# fdisk /dev/vdb
+ 
+                   n 划分新的分区
+                   p 查看分区表
+
+[root@svr7 ~]# partprobe  #刷新
+
+
+二 逻辑卷 Lvm
+
+   逻辑卷:  1.整合分散的空间   2.空间可以扩大
+   
+  将众多的物理卷,组成卷组,在从卷组中划分逻辑卷
+
+[root@svr7 ~]# vgcreate  myvg  /dev/vdb1 /dev/vdb2
+[root@svr7 ~]# lvcreate -L 16G -n mylv myvg
+[root@svr7 ~]# mkfs.xfs /dev/myvg/mylv
+[root@svr7 ~]# blkid /dev/myvg/mylv
+
+三 挂载使用
+   /etc/fstab
+  设备   挂载点    文件系统    参数  0  0
+[root@svr7 ~]# mkdir /mylvm
+[root@svr7 ~]# vim /etc/fstab 
+
+/dev/myvg/mylv    /mylvm  xfs   defaults  0 0
+
+[root@svr7 ~]# mount -a   #检测
+[root@svr7 ~]# df -h
+
+四 扩展逻辑卷, 扩展空间, 扩展文件系统
+
+[root@svr7 ~]# vgextend myvg /dev/vdb3       #扩展卷组空间
+
+[root@svr7 ~]# vgs
+[root@svr7 ~]# lvextend -L 25G /dev/myvg/mylv  #扩展空间
+
+[root@svr7 ~]# lvs
+[root@svr7 ~]# xfs_growfs /dev/myvg/mylv    #刷新新的文件系统
+
+[root@svr7 ~]# df -h
+
+######################################################
+﻿1.分区的命令都有哪些？
+  fdisk parted   
+
+2.逻辑卷LVM的作用？
+   整合分散的空间
+   扩展空间
+
+3.请简要说明逻辑卷LVM创建过程？
+    将众多的物理卷,组成卷组,在从卷组中划分逻辑卷
+
+4.MBR分区模式，有哪些分区类型？
+    主分区  扩展分区  逻辑分区
+
+5.开机自动挂载配置文件，具体字段有哪些？
+  设备   挂载点    文件系统    参数   0  0
+
+6.请写出lv扩展空间的命令与vg扩展空间的命令？
+    lvextend
+    vgextend
+
+7.PATH变量的作用？
+  提供命令程序的搜寻的路径
+
+#####################################################
+DNS服务器
+
+• 为什么需要DNS系统
+– www.baidu.com 与 119.75.217.56,哪个更好记?
+– 互联网中的114查号台/导航员
+
+• DNS服务器的功能
+  – 正向解析:根据注册的域名查找其对应的IP地址
+  – 反向解析:根据IP地址查找对应的注册域名,不常用
+   
+        所有的域名,以点作为结尾   
+
+                       根域  .
+
+  一级域名:   .cn   .us   .tw   .kr  .hk   .com  .net .org
+
+  二级域名:  .edu.cn  .com.cn
+
+  三级域名:    sina.com.cn    haha.com.cn     dc.com.cn
+
+  主机名: www.dc.com.cn   tts.dc.com.cn
+
+• Full Qualified Domain Name,(FQDN)完全合格主机名
+  – = 站点名.域名后缀
+  – = 站点名. .. .. .二级域.一级域
+
+常见的顶级/一级域名
+– 国家/地区域: .cn、.us、.kr、.hk、.tw、.. ..
+– 组织域: .com、.net、.edu、.org、.gov、.mil、.. ..
+
+
+– 系统服务:named
+– 默认端口:TCP/UDP 53
+
+• 主配置文件: /etc/named.conf   设置本机负责解析的域名  tedu.cn
+• 地址库文件: /var/named/       主机名与IP地址对应关系
+
+• NS,域名服务器(Name Server)记录
+• A,地址(Address)记录,仅用于正向解析区域
+
+####################################################
+搭建DNS服务器
+
+虚拟机A:
+1.安装DNS服务的软件包
+[root@svr7 ~]# yum -y install bind-chroot  bind
+[root@svr7 ~]# rpm -q bind
+ bind-9.9.4-29.el7.x86_64           #域名服务包
+[root@svr7 ~]# rpm -q bind-chroot
+ bind-chroot-9.9.4-29.el7.x86_64    #提供虚拟根支持(牢笼政策)
+
+2.修改配置文件/etc/named.conf
+[root@svr7 ~]# vim  /etc/named.conf 
+ options {
+	 directory 	"/var/named";   #指定地址库文件位置
+ };
+ zone  "tedu.cn"  IN  {        #指定本机解析的域名
+	 type  master;          #指定本机为主DNS服务器
+	 file  "tedu.cn.zone";  #指定域名解析的地址库文件的名字
+ };
+
+3.创建地址库文件/var/named/tedu.cn.zone
+[root@svr7 named]# cd /var/named
+[root@svr7 named]# cp -p  named.localhost tedu.cn.zone
+[root@svr7 named]# ls -l  tedu.cn.zone
+[root@svr7 named]# vim  tedu.cn.zone
+
+ tedu.cn.	   NS       svr7         #声明域名的服务器名称
+ svr7            A	     192.168.4.7  #解析DNS主机名对应IP
+ www             A        1.1.1.1      #主机名解析记录
+ ftp             A        2.2.2.2      #主机名解析记录
+
+4.重起named服务,设置开机自起
+
+客户端虚拟机B:
+  # echo nameserver 192.168.4.7  >  /etc/resolv.conf
+  # nslookup www.tedu.cn		
+  # nslookup ftp.tedu.cn
+
+######################################################
+ 特殊解析的记录
+
+
+泛域名解析
+• 匹配本域内未定义的任何主机地址
+– 直接以 * 条目匹配
+– 一般只用在正向区域文件中
+
+虚拟机A:
+[root@svr7 /]# tail -2 /var/named/tedu.cn.zone
+*               A        10.11.12.13
+tedu.cn.        A        100.200.210.220
+
+[root@svr7 /]# systemctl restart named
+
+虚拟机B:
+[root@pc207 /]# nslookup tedu.cn
+[root@pc207 /]# nslookup haha.tedu.cn
+
+有规律的泛域名解析
+
+            pc1.tedu.cn------->192.168.10.1
+            pc2.tedu.cn------->192.168.10.2
+            pc3.tedu.cn------->192.168.10.3
+                       .......
+            pc50.tedu.cn------->192.168.10.50
+
+
+  $GENERATE  生成连续的范围的数字
+
+  $GENERATE  1-50    pc$     A   192.168.10.$
+
+###################################################
+DNS子域授权
+
+          父域:  www.tedu.cn
+
+          子域:  www.bj.tedu.cn
+
+     虚拟机A能够解析父域的域名: tedu.cn 
+                 
+     虚拟机B能够解析子域的域名: bj.tedu.cn 
+ 
+   客户端解析www.bj.tedu.cn----->192.168.4.7能得到虚拟机B的解析
+   客户端解析www.tedu.cn----->192.168.4.207能得到虚拟机A的解析
+
+
+
+
+
+
+虚拟机B
+1.安装DNS服务的软件包
+[root@pc207 /]# yum -y install  bind-chroot  bind
+2.修改配置文件/etc/named.conf
+[root@pc207 /]# vim  /etc/named.conf 
+ options {
+	 directory 	"/var/named";   #指定地址库文件位置
+ };
+ zone  "bj.tedu.cn"  IN  {       
+	 type  master;         
+	 file  "bj.tedu.cn.zone";  
+ };
+3.创建地址库文件/var/named/bj.tedu.cn.zone
+[root@pc207 /]# cd /var/named
+[root@pc207 /]# cp -p  named.localhost  bj.tedu.cn.zone
+[root@pc207 /]# vim  bj.tedu.cn.zone
+ bj.tedu.cn.	   NS      pc207         
+ pc207           A	    192.168.4.207  
+ www             A       40.40.50.50   
+4.重起named服务,设置开机自起
+
+
+
+[root@pc207 /]# nslookup www.bj.tedu.cn 192.168.4.207
+Server:		192.168.4.207
+Address:	192.168.4.207#53
+
+Name:	www.bj.tedu.cn
+Address: 40.40.50.50
+
+##############################################
+
+子域授权
+
+   客户端解析www.bj.tedu.cn----->192.168.4.7能得到虚拟机B的解析
+
+虚拟机A:操作
+
+[root@svr7 /]# vim /var/named/tedu.cn.zone
+  tedu.cn.        NS      svr7
+  bj.tedu.cn.     NS      pc207
+  svr7            A       192.168.4.7
+  pc207           A       192.168.4.207
+
+[root@svr7 /]# systemctl  restart named
+
+[root@svr7 /]# nslookup www.bj.tedu.cn 192.168.4.7
+
+  
+  递归查询: 主DNS服务器,与其他DNS交互,最后将解析结果返回给客户端
+
+#######################################################
+  客户端解析www.tedu.cn----->192.168.4.207能得到虚拟机A的解析
+
+ 子域转发        
+
+虚拟机B:
+[root@pc207 /]# vim /etc/named.conf 
+
+  zone "tedu.cn" IN {
+	type forward;
+	forwarders  {   192.168.4.7;  };
+   };
+
+[root@pc207 /]# systemctl restart named 
+[root@pc207 /]# nslookup www.tedu.cn 192.168.4.207
+
+#####################################################
+ 缓存DNS服务器,提高解析速度  缓存加速
+
+
+缓存DNS
+ – 不需要管理任何DNS区域,但是能够替客户机查询,
+而且通过缓存、复用查询结果来加快速度
+ – 典型应用:ISP服务商、企业局域网
+
+
+• 方式1:全局转发
+ – 将请求转发给指定的公共DNS(其他缓存DNS),请求递归服务
+
+
+• 方式2:根域迭代
+ – 依次向根、一级、二级......域的DNS服务器迭代
+
+#################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

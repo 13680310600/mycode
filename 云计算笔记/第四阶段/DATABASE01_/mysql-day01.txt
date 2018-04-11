@@ -1,0 +1,355 @@
+准备5台rhel7操作系统的虚拟机 配置如下
+禁用SELinux  关闭防火墙  配置本地yum源
+配置固定IP地址 依次是192.168.4.51/52/53/54/55
+下载软件 ftp://172.40.50.117/softpackage/mysql/*  
+
+linux系统的基本使用。  
+rpm  
+用户管理 
+常用的安装启动查看  
+会配置yum源   
+
+Linux数据库管理  7天  
+DBA（数据库管理员）  6K+ 
+++++++++++++++++++++++++++++
+课间休息
+45分钟   10分钟    班长负责提醒下课。
+ 
+早晚自习出勤：8:30   9:00
+              19:00  21:00
+        
+自己  记 笔记  .txt文档  （知识点）
+
+上课纪律？  看PPT？  案例？ 
+++++++++++++++++++++++++++++++++
+一、搭建数据库服务器？
+二、数据库服务的基本使用？
+三、MySQL数据类型？
+四、管理表记录？
+五、用户授权与权限撤销？
+六、数据备份与恢复
+七、MySQL主从同步？
+八、数据读写分离？
+九、MySQL优化？
+十、MySQL集群？
++++++++++++++++++++++++++++++++++
+一、搭建数据库服务器？
+请阐述你架设数据库服务器的部署思路？
+
+数据库服务器 是用来存储存储数据库。
+
+5W 服务器品牌：联想  DELL  IBM  HP 
+1 购买服务器（硬件配置 存储  CPU  内存）
+
+2 安装操作系统：Linux  UNIX  Windows
+                RHEL7  mariadb-server
+                RHEL6  mysql-server
+
+3 安装提供数据库服务的软件包
+3.1 软件包的来源？
+官网下载  使用系统安装光盘自带的
+
+3.2 软件包的类型？ RPM   源码
+
+3.3 提供数据库服务的软件有哪些？
+mysql  mariadb  oracle  sql server db2
+
+3.3 使用商业的还是开源 是否跨平台？
+
+3.4 mysql 发展历史  特点  应用场景 版本
+关系型数据库软件？
+非系型数据库软件？
+mangodb  memcached redis ( key values)
+
+通常和网站服务一起使用 LAMP  LNMP
+                        Apache Nginx
+
+购物网站 游戏网站 论坛网站 金融网站
+登录账户 （名 密码）
+购物信息
+
+3.5安装MySQL软件提供数据库服务？（51）
+3.5.1 卸载系统自带的mariadb软件
+
+]# tar -xf mysql-5.7.17-1.el7.x86_64.rpm-bundle.tar
+
+3.5.2  安装软件包
+]# rm -rf mysql-community-server-minimal-5.7.17-1.el7.x86_64.rpm
+
+]# yum -y install perl-Data-Dumper perl-JSON
+
+]# rpm  -Uvh  mysql-community-*.rpm
+
+]# rpm  -qa | grep  -i mysql
+
+3.6 启动服务
+]# systemctl  start mysqld
+]# systemctl  enable mysqld
+
+3.7  与MySQL数据库服务相关的信息 ?
+进程名  mysqld
+默认端口号  3306
+进程所有者和所属组 mysql/mysql
+传输协议 TCP
+默认主配置文件 /etc/my.cnf
+默认数据库目录 /var/lib/mysql
+日志文件文件 /var/log/mysqld.log
+
+3.8 使用数据库管理员root用户初始密码连接数据库服务。
+]# grep -i password /var/log/mysqld.log
+
+]# mysql -uroot -p随机初始密码
+mysql>
+mysql> quit   //断开连接
+
+
+3.8 设置数据库管理员root用户本机登录密码
+mysql>  set global validate_password_policy=0;
+
+mysql> set global validate_password_length=6;
+
+mysql> alter user  root@"localhost" identified by "123456";
+mysql> quit
+]# mysql -uroot -p123456
+mysql> show databases;
+
+让配置永久生效
+]# vim /etc/my.cnf
+[mysqld]
+validate_password_policy=0
+validate_password_length=6
+:wq
+]# 
+]# mysql -uroot -p123456
+++++++++++++++++++++++++++++++++++++
+练习:
+在ip地址是192.168.4.52的主机运行mysql数据库服务，并设置数据库管理员本机登录的密码是abc123 
++++++++++++++++++++++++++++++++++++
+二、数据库服务的基本使用？
+2.1 把数据存储到数据库服务器上的过程？
+1 连接数据库服务器
+*不做授权的时候只允许数据库管理root用户在数据库本机连接数据库服务。
+
+]#mysql  -hlocalhost  -uroot  -p123456
+mysql> 
+
+2 创建库(文件夹)
+mysql> show databases;
+mysql> create  database 库名;
+mysql> system  ls /var/lib/mysql
+mysql> select     database();
+mysql> use 库名;
+mysql> drop  库名;
+
+3 建表（系统文件）
+*表必须保存在库里。
+mysql> use mysql;
+mysql> show  tables;
+mysql> desc  表名;
+
+建表命令
+create  table 库.表名(
+字段名  类型(宽度) 约束条件，
+字段名  类型(宽度) 约束条件，
+.....
+);
+
+插入表记录
+insert  into  库.表名  values(值列表);
+
+
+查看表记录
+mysql> select  *  from 库.表名；
+mysql> select  * from  表名；
+mysql> select  user,host from  user;
+
+
+删除所有表记录
+delete  from  库.表名；
+
+删除表
+drop  table  库.表名；
+
+
+行（记录）
+列（字段名）
+把学生信息保存到系统文件里
+touch  /root/student.txt
+name   age   stu_id     sex
+tom    19    nsd171101  boy
+
+4 断开连接
+mysql> quit
++++++++++++++++++++++++++++++++++++
+mysql> create table gamedb.stu(
+    -> name  char(10),
+    -> age int(2)
+    -> );
+mysql> use  gamedb;
+mysql> show tables;
+mysql> system  ls /var/lib/mysql/gamedb
+mysql> desc  stu;
+mysql> select  * from stu;
+mysql> 
+insert  into  stu  values("jim",21);
+insert  into  stu  values("tom",19);
+mysql> select  * from stu;
+mysql> select  name from stu;
+mysql> delete  from  stu;
+mysql> drop  table  stu;
+mysql> drop  database  gamedb;
+
+管理数据库服务使用的是sql命令.
+sql命令使用规则？
+sql命令类型？ 
+库名的命名规则？
++++++++++++++++++++++++++++++++++
+三、MySQL数据类型？
+字符类型 char   varchar   blob  text   （有中文字的 名字之类的）  用char  and    
+
+数值类型  
+存储整数（没有小数的数）要记住每种整数类型能够存储数值的范围    （就是数字）
+tinyint  smallint  MEDIUMINT int bigint    生产环境用（int）常用
+
+存储有小数点的数
+单精度 float
+双精度 double
+
+日期时间类型 
+year  date   time  datetime/timestamp
+(年)    （日期） （时间）  （日期时间）
+
+枚举类型  set(多选)  enum(单选) 
+
+
+
+create database  db1;
+
+create table db1.t1(
+age  tinyint
+);
+
+create table db1.t2(
+age  tinyint  unsigned
+);
+
+insert into  db1.t1 values(325);
+
+
+整数.小数  总位数
+103.77     5位
+
+float(n,m)
+n 表示总位数
+m 表示小数位 位数
+
+rust  double(7,2)
+rust  float(7,2)
+xxxxx.xx
+99999.99
+  0.00
+-99999.99
+
+create table db1.t3(
+age  tinyint  unsigned,  //年龄
+rust float(5,2),  //成绩
+pay  float(7,2)   //工资
+);
+
+insert into  db1.t3 values(21,59.9,18000.23);
+
+字符类型 
+char 255字节        定常   
+varchar 65532字节   变长 
+
+大文本
+blob  text
+
+数字  字符  音频 视频  图片
+
+C:\Users\Administrator\Desktop\提神曲/a.mp3
+
+create table db1.t4(
+name  char(3)  
+);
+
+create table db1.t5(
+name  varchar(5)  
+);
+
+
+insert  into  t4  name("lucy");
+
+
+t1      	t2
+name	 	name    
+char(10) 	varchar(3)
+jim		jim
+lucy		lucy
+a  		a
+
+
+create table db1.t7(
+name  char(10),
+age  tinyint  unsigned, 
+rust float(5,2),  
+pay  float(7,2)   
+);
+
+insert into db1.t7  values("zhangsan",21,112.23,20000);
+
+
+create  table  db1.t8 (
+name char(3),
+pay  int(3) zerofill
+);
+
+insert into  db1.t8 values("jim",10024);
+
++++++++++++++++++++++++++++++++++++++
+
+
+四、管理表记录？
+五、用户授权与权限撤销？
+六、数据备份与恢复
+七、MySQL主从同步？
+八、数据读写分离？
+九、MySQL优化？
+++++++++++++++++++++++++++++++
+
+3个人出差住店  10/人   *  3  = 30
+老板 优惠5块  费用25元
+     服务员贪污2元  剩3元 
+                    3个人每人返回1元
+10-1 = 9 * 3 = 27 
+十、MySQL集群？
+
+
+
+
+
+
+
+
+
+
+
+
+
+       
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      

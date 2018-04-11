@@ -1,0 +1,177 @@
+
+ftp://172.40.50.118/share/python_note
+
+python语言  + 模块 [科学计算]
+
+数据分析，人工智能，机器学习，网站，科学计算
+
+
+
+命令+shell语法格式
+
+python【数据分析，网站，电影，书】
+
+win  python
+linux python
+调用模块【积木】
+
+
+Linux
+
+python-startup=a.sh
+
+python 
+
+ftp://172.40.50.118/share/autotab.sh
+
+python[空格或tab是必需]
+
+if 3>2:
+
+python【模块】  （功能）a.py
+
+
+shell[模块]
+
+
+python[模块{10功能}]
+
+import  os
+os.chmod('ttt.py',777)
+
+os.chmod('/root/abc.txt',0777)
+
+
+i=12344334
+i=0232
+i=0x33
+i=ob1010
+i=1.3
+i=9999999999999999999999999999
+
+i="abc"
+i='abc'
+i='''abc'''
+
+
+
+
+变量赋值：
+1.数字
+ab=1
+ab=99999999999999999999
+ab=3.333
+ab=0777    (8进制)
+ab=0xff			(16)
+ab=0b010101  (2)
+
+
+2.字符
+ab="abc"
+ab='ab'
+ab='''abcc'''
+a[1]
+a[1:-1]
+a[:4]
+a[4:]
+print a+b
+print a*20
+
+3.变量可以是列表
+a=['tom',122,'test',34]
+
+a[0]						提取a列表中的第0个值
+a[1]
+a[:3]						提取a列表中的第0到第2值(3-1=2)
+a[3:]
+tom in a				判断tom是否在a变量中
+'nihao' in a		判断nihao是否在a变量中
+
+a.append('xxx')		向列表a中追加值
+a.remove(122)			从列表a中删除122的值
+
+
+4.变量可以是元组，不可修改的列表
+ab=('tom',22,'hehe')
+ab[0]
+ab[1]
+'tom' in ab				判断tom是否在ab变量中
+
+
+5.字典
+toms={'name':'tom','age':22,'sex':'male'}
+注意事项：字串一定需要【引号】
+
+toms						#提取所有的值
+toms['name']		#提取toms字典中name的值
+toms['age']=18	#修改toms字典中age的值
+toms['qq']=1111	#新建toms字典中qq以及它的值
+
+
+
+    ==  !=   >=   <=   >   < 
+
+
+案例：
+1.读取用户输入信息，赋值给变量
+  user=raw_input("提示:")
+  passwd=raw_input("提示:")
+
+2.判断：
+如果用户名是bob,密码是123456,则提示成功
+否则提示失败
+
+提示：#coding:utf-8
+提示：and逻辑并且，相当于shell【&&】
+     if  判断1    and   判断2
+
+#!/usr/bin/python
+#coding:utf-8
+
+user=raw_input("请输入用户名:")
+passwd=raw_input("请输入用密码:")
+
+if  user=='bob' and  passwd=='123456':
+    print "成功"
+else:
+    print "失败"
+
+
+
+score=raw_input("请输入成绩:")
+if  score > 90:
+		print "A"
+elif  score > 80:
+	   print "B"
+elif  score > 70:
+
+
+vim a.py
+import  random
+num=random.randint(1,100)
+
+
+
+
+if 判断：
+     指令
+
+if  判断：
+     指令
+else:
+     指令
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

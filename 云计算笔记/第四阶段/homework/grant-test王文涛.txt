@@ -1,0 +1,54 @@
+1、修改数据库管理员从本机登录的密码为tarena
+]#mysqladmin  -hlocalhost  -uroot  -p  password "tarena"
+   数据库管理员使用新密码从本机连接数据库服务器
+]#mysql  -hlocalhost  -uroot  -ptarena
+
+2、查看当前登陆数据库服务器的用户是谁？
+mysql> select  user();
+
+3、查看当前登陆数据库服务器用户的权限？
+mysql> show  grants;
+
+4、查看当前数据库服务器有哪些授权用户?
+mysql>  select  user,host  from  mysql.user;
+
+5、授权管理员用户可以在网络中的192.168.4.254主机登录，对所有库和表有完全权限且有授权的权限；登陆密码abc123
+mysql>  grant  all  on  *.*  to  admin@"192.168.4.254"  identified  by  "abc123"  with  grant  option;
+
+6、不允许数据库管理员在数据库服务器本机登录。
+mysql> delete from  mysql.user  where  user="root"  and  host="localhost";
+mysql> flush  privileges;
+
+7、授权userweb用户可以从网络中的任意主机访问数据库服务器，对db3库下的user表有查看、更新name字段和age字段的权限 ，  登录密码userweb888。
+mysql> grant select,update(name,age) on db3.user to userweb@"%"  identified  by  "userweb888";
+mysql> grant insert on mysql.* to userweb@"%";
+
+8、验证以上授权是否成功
+]# mysql -h192.168.4.51 -uuserweb -puserweb888
+mysql> show databases;
+mysql> use db3;
+mysql> select * from db3.user;
+mysql> update db3.user set age=20;
+
+9、userweb修改自己的登陆密码为123456,并验证能否使用新密码登陆
+mysql> set password=password("123456");
+]# mysql -h192.168.4.51 -uuserweb1 -p123456
+
+10、 数据库管理员修改授权用户userweb的登录密码为654321，让授权用户userweb 使用新密码登陆数据库服务器。
+mysql> set password userweb@"%"=password("654321");
+
+11、撤销授权用户userweb 的所有授权并 使其不再能使用此用户连接数据库服务器。
+mysql> revoke  all  *.*  from  userweb@"%";
+mysql> drop user userweb@"%";
+
+12、授权webadmin用户可以从网络中的所有主机登录，对bbsdb库拥有完全权限，且有授权权限，登录密码为 123456
+mysql>  grant  all  on  bbsdb.*  to  webadmin@"%"  identified  by  "123456"  with  grant  option;
+
+13、在客户端使用授权用户webadmin登录，把自己的权限授权给userone用户 ， 登录密码是  123456
+服务器端：mysql> grant insert on mysql.* to webadmin@"%";
+客户端：]#mysql -h192.168.4.51 -uwebadmin -p123456;
+mysql> grant  all  on  bbsdb.*  to  userone@"%"  identified  by  "123456"  with  grant  option;
+
+15、撤销webadmin用户的授权权限。
+mysql> revoke  grant option on bbsdb.* from webadmin@"%";
+

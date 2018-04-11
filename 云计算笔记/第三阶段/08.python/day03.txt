@@ -1,0 +1,174 @@
+try:
+	指令
+except 错误类型:
+	print "错误提示内容"
+
+try:
+    num=int(raw_input('请输入数字:')) 
+except:									//有错误才执行//
+    print "错误"
+else:										//没有错误才执行//
+    print num
+finally:								//有没有错误都执行//
+    print "程序结束"
+
+
+
+
+with open('/etc/hosts') as data:
+		data.readline()
+		data.readline()
+with语句结束后会自动关闭文件，不需要手动close()
+
+
+
+自定义报错信息：ValueError
+raise
+
+断言：assert
+
+
+
+正则表达式
+m=re.match('the','hello the world')
+从开始匹配，在数据中找the
+找到返回Match，否则返回None
+m.group()   #查看找到的匹配值
+
+m=re.search('the','hello the world')
+在整个数据的任意位置中找the,仅找第一个匹配
+找到返回Match，否则返回None
+m.group()   #查看找到的匹配值
+
+
+m=re.findall('the','hello the a the world')
+在整个数据的任意位置中找the,找全部的匹配
+找到返回Match，否则返回None
+m.group()   #查看找到的匹配值
+
+ 
+
+
+
+统计Apache访问日至
+1.统计每个客户端访问次数
+
+/var/log/httpd/access_log
+#!/usr/bin/python
+#coding:utf-8
+import re                   #导入正则模块
+z='Firefox'       #匹配IP地址
+dica={}                      #空字典
+data=open('access_log')     #读取文件
+for i in data:              #循环文件每一行
+    m=re.search(z,i)        #在每行中匹配IP
+    if m:
+        ip=m.group()            #把匹配的IP提取出来
+        dica[ip]=dica.get(ip,0)+1
+print dica
+
+
+
+for i in {1..254}
+do
+	ping -c2 -i 0.2 192.168.4.$i &>/dev/null
+	if [ $? -eq 0 ];then
+			echo "192.168.4.$i is up"
+	else
+			echo "192.168.4.$i is down"
+	fi
+done
+
+
+
+
+import subprocess
+for i in range(1,255):
+	  m=subprocess.call('ping -c2 192.168.4.%s &>/dev/null'%i,shell=True)		
+		if m:
+			print "192.168.4.%s is down"%i
+		else:
+			print "192.168.4.%s is up"%i
+
+
+CPU--IO
+
+		ping -c2 192.168.4.1
+网卡--------------------------------------------------------->网卡0.1s
+		<----------------------------0.1s
+0.000000001 CPU等
+0.000000001 CPU返回结果：通的
+
+	ping -c2 192.168.4.2
+网卡--------------------------------------------------------->网卡0.1s
+		<----------------------------2s
+0.000000001 CPU等
+
+
+
+
+#!/usr/bin/python
+#coding:utf-8
+
+import subprocess
+import threading
+def myping(ip):
+    m=subprocess.call('ping -c2 %s &>/dev/null'%ip,shell=True)
+    if m:
+        print "%s is down"%ip
+    else:
+        print "%s is up"%ip
+#定义函数，允许ping任何主机，myping需要给IP作为参数
+ips=['172.40.3.%s'%j for j in range(1,255)]
+#生成整个网段的IP列表[172.40.3.1,172.40.3.2....]
+for i in ips:
+    t=threading.Thread(target=myping,args=(i,))
+    t.start()
+
+
+
+
+
+
+
+def ping(ip):
+	m=subprocess.call('ping -c2 %s'%ip,shell=True)
+	if m:
+			print "%s is down"%ip
+	else:
+			print "%s is up"%ip
+
+ips=['192.168.4.%s'%i for i in range(1,255)]
+ips=[192.168.4.1,192.168.4.2....]
+
+for  i  in  ips:
+		t=treading.Tread(targe=ping,args=(i,))
+		t.start() 
+
+
+
+使用paramiko自动远程其他主机
+
+#!/usr/bin/python
+import paramiko
+host='192.168.4.5'
+ssh = paramiko.SSHClient()
+ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+ssh.connect(host, username='root', password='redhat')
+stdin, stdout, stderr = ssh.exec_command('ls /')
+print stdout.read()
+print stderr.read()
+
+
+ftp://172.40.50.118/share
+
+day01.txt
+day02.txt
+day03.txt
+python2-paramiko/软件包
+
+
+
+
+
+

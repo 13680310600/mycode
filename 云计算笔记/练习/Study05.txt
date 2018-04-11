@@ -1,0 +1,132 @@
+案例练习,准备:
+            rht-vmctl  reset  classroom
+            rht-vmctl  reset  server
+	    rht-vmctl  reset  desktop
+######################################################
+
+案例1:指定yum软件源
+为 server0 指定可用的 yum 软件源
+– YUM软件库的地址为 http://classroom.example.com/rhel7.0/x86_64/dvd
+– 将此配置为虚拟机 server0 的默认软件仓库
+– 确认可用的仓库列表
+[root@server0 ~]# cd /etc/yum.repos.d/
+[root@server0 yum.repos.d]# ls
+rhel_dvd.repo
+[root@server0 yum.repos.d]# vim rhel_dvd.repo 
+[root@server0 yum.repos.d]# rm -rf rhel_dvd.repo 
+[root@server0 yum.repos.d]# vim haha.repo
+[root@server0 yum.repos.d]# yum repolist 
+已加载插件：langpacks
+haha                                                     | 4.1 kB     00:00     
+(1/2): haha/group_gz                                       | 134 kB   00:00     
+(2/2): haha/primary_db                                     | 3.4 MB   00:00     
+源标识                                源名称                               状态
+haha                                  xixi                                 4,305
+repolist: 4,305
+
+– 利用yum仓库安装xeyes
+[root@server0 yum.repos.d]# yum install -y xeyes
+……
+作为依赖被安装:
+  libXaw.x86_64 0:1.0.11-6.1.el7                                                
+
+完毕！
+
+
+– 运行指令xeyes查看效果
+出现了一双会随着鼠标移动的眼睛
+
+
+案例2：chmod权限设置
+    1）以root用户新建/nsddir/目录，在该目录下新建文件readme.txt
+[root@server0 yum.repos.d]# mkdir /nsddir
+[root@server0 yum.repos.d]# cd /nsddir
+[root@server0 nsddir]# touch readme.txt
+
+    2）使用户zhangsan能够在/nsddir/目录下创建/删除子目录
+[root@server0 nsddir]# useradd zhangsan
+[root@server0 nsddir]# chmod  o+w /nsddir
+[root@server0 nsddir]# ls -ld 
+drwxr-xrwx. 2 root root 23 12月 20 18:48 .
+
+    3）使用户zhangsan能够修改/nsddir/readme.txt文件的容
+[root@server0 nsddir]# chmod o+w /nsddir/readme.txt 
+[root@server0 nsddir]# ls -ld /nsddir/readme.txt 
+  
+ 
+案例3：chown归属设置
+    1）新建/tarena1目录
+	a）将属主设为gelin01，属组设为tarena组
+[root@server0 nsddir]# groupadd tarena
+[root@server0 nsddir]# useradd -G tarena gelin01
+[root@server0 nsddir]# chown gelin01:tarena /tarenal/
+
+	b）使用户gelin01对此目录具有rwx权限，其他人对此目录无任何权限
+[root@server0 nsddir]# chmod u=rwx,o=--- /tarenal/
+
+    2）使用户gelin02能进入、查看/tarena1文件夹（提示：将gelin02加入所属组）
+[root@server0 nsddir]# useradd -G tarena gelin02
+
+    3）新建/tarena2目录
+	a）将属组设为tarena
+[root@server0 nsddir]# mkdir /tarena2
+[root@server0 nsddir]# chown :tarena /tarena2 
+
+	b）使tarena组的任何用户都能在此目录下创建、删除文件
+[root@server0 /]# chmod g=rwx /tarena2
+
+    4）新建/tarena/public目录
+[root@server0 tarena2]# mkdir -p /tarena/public
+
+	a）使任何用户对此目录都有rwx权限
+[root@server0 tarena2]# chmod u=rwx,g=rwx,o=rwx /tarena/public/
+
+	b）拒绝zhangsan进入此目录，对此目录无任何权限
+[root@server0 tarena2]# setfacl -m u:zhangsan:--- /tarena/public/
+
+
+案例4:权限设置
+	1、创建文件夹/data/test,设置目录的访问权限，使所有者和所属组具备读写执行的权限；其他人无任何权限。
+[root@server0 tarena2]# mkdir -p /data/test
+[root@server0 tarena2]# chmod u=rx,g=rx,o=--- /data/test/
+
+	2、递归修改文件夹/data/test的归属使所有者为zhangsan，所属组为tarena。
+[root@server0 tarena2]# chown -R zhangsan:tarena /data/test/
+
+	3、请实现在test目录下，新建的所有子文件或目录的所属组都会是tarena。
+[root@server0 tarena2]# chmod g+s /data/test/
+
+	4、为lisi创建ACL访问权限，使得lisi可以查看/etc/shadow文件
+[root@server0 test]# useradd lisi
+[root@server0 test]# setfacl -R -m u:lisi:r /etc/shadow
+
+案例5：绑定到LDAP验证服务
+
+ –  使用系统 classroom.example.com 提供的LDAP服务
+[root@server0 test]# yum install -y sssd gtk
+……
+完毕！
+ –  验证服务的基本DN是：dc=example,dc=com
+ –  账户信息和验证信息都是由 LDAP 提供的
+ –  连接要使用证书加密，证书可以在下面的链接下载：
+      http://classroom.example.com/pub/example-ca.crt 
+ –  确认本地可以识别ldapuser0用户
+[root@server0 test]# id ldapuser0
+uid=1700(ldapuser0) gid=1700(ldapuser0) 组=1700(ldapuser0)
+
+
+案例6：访问NFS共享
+ –  查看classroom.example.com的NFS共享
+[root@server0 test]# showmount -e 172.25.254.254
+Export list for 172.25.254.254:
+/home/guests 172.25.0.0/255.255.0.0
+
+ –  将classroom.example.com的NFS共享目录，挂载到本地/home/guests
+[root@server0 test]# mkdir /home/guests
+[root@server0 test]# mount 172.25.254.254:/home/guests  /home/guests
+[root@server0 test]# ls /home/guests/
+ldapuser0   ldapuser12  ldapuser16  ldapuser2   ldapuser5  ldapuser9
+ldapuser1   ldapuser13  ldapuser17  ldapuser20  ldapuser6
+ldapuser10  ldapuser14  ldapuser18  ldapuser3   ldapuser7
+ldapuser11  ldapuser15  ldapuser19  ldapuser4   ldapuser8
+

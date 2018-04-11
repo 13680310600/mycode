@@ -1,0 +1,254 @@
+
+曾 晔
+
+ Sha-Bang 标记 ==》声明执行环境
+
+  #!/bin/bash 放在脚本的第一行
+
+
+脚本 /root/foo.sh 的执行方式？
+方式1：
+# chmod  +x  /root/foo.sh
+# /root/foo.sh
+
+方式2：
+# bash  /root/foo.sh
+等同于
+# sh  /root/foo.sh
+
+方式3：
+# source  /root/foo.sh
+等同于
+# .  /root/foo.sh
+
+
+变量 $? 的作用？  —— 前一条命令的返回值（报告给内核）
+
+命令行的错误输出/显示 vs 命令行执行失败？
+1）错误输出报告给用户、执行返回值报告给内核
+2）查看错误输出：命令行；查看返回值：echo  $?
+
+变量 $# 的作用 —— 记录了位置变量（跟在脚本后的参数）的个数
+
+如何取得/显示用户在执行此脚本时提供的第11个参数？
+${11}
+echo  ${11}
+
+如何知道执行此脚本的用户是谁？
+echo  $USER
+
+
+如何获知当前已登录的用户个数？
+who  |  wc  -l
+
+如何统计当前系统运行的进程数量？
+pgrep  .  | wc  -l
+
+
+管道操作 —— 将前一条命令的显示文本交给后一条命令（cat、less、more、grep、wc、……）处理
+命令行1  |  命令行2
+
+
+
+如何查询vim编辑器工具对应的软件包一共安装了哪些文件？
+
+which  vim
+rpm  -qf  /bin/vim
+rpm  -ql  vim-enhanced
+==》rpm  -ql  $(rpm  -qf  $(which vim))
+
+命令替换 —— 取得指定命令行的显示结果
+`命令行`
+$(命令行) 		==》可以嵌套
+
+求模（取余数）运算：
+
+1000 % 6 + 1 ==》结果就是范围1～6余数
+1234 % 6 + 1 ==》结果就是范围1～6余数
+
+随机整数 % 100 + 100   ==》结果就是范围1～6余数
+
+
+随机整数 % 31 + 1 ==》双色球摇号 1～31
+
+
+echo $RANDOM
+
+
+练习：expr和$[]整数运算操作
+1. 分别计算整数值100与11的加减乘除和求模结果
+2. 定义变量X=15、Y=6，并计算这两个变量的加减乘除和求模结果
+3. 使变量X的值增加1、Y的值减少3，确认结果
+4. 再次计算变量X和Y的加减乘除和求模结果
+
+
+如何计算 /root 目录在 / 分区中的磁盘占用百分比？
+
+
+请思考：
+写一个猜剪刀石头布的脚本 /root/stone.sh
+用户执行脚本时提供猜拳的答案，电脑随机出（1-3）
+目标：
+# /root/stone.sh  石头
+你出：石头
+我出：3 
+
+
+Shell环境的测试操作（$?返回值） ——
+命令行
+test  。。。。
+
+
+如何检查某个用户账号是否已经创建好？
+id  用户名
+
+检查当前主机的CPU处理器是否64位？
+lscpu  |  grep  -q  x86_64
+
+
+命令1  &&  命令2  ||  命令3
+实现的目标：
+如果命令1成功，会继续执行命令2、忽略命令3
+如果命令1失败，会放弃命令2、执行命令3
+
+请思考：
+判断指定的用户是否存在？反馈结果（yes或no）
+# id  zhsan  &&  echo  yes  ||  echo no
+
+检查当前的系统是否CentOS？反馈结果（yes或no）
+# grep  -qi  centos  /etc/redhat-release   && echo yes || echo no
+
+
+检查当前用户的UID是不是0，如果是那么反馈“欢迎主人”，如果不是“滚！！”
+
+
+检查当前系统中运行的进程数量，如果超过200，那么发一封邮件告诉root？  
+# [ $(pgrep  .  | wc -l) -gt 200 ] &&  echo "进程数太多。。。" | mail  -s "Alert1"  root
+
+
+对于给定的会员积分值，如何判断是否在10000～20000之间？
+
+
+[  $JIFEN  -ge  10000 ]  &&  [  $JIFEN  -lt  20000 ]
+
+
+
+vncviewer  172.40.50.113:7000
+
+练习：
+1. 检查当前主机的CPU类型，根据结果显示“64位”或“32位”
+# lscpu  | grep  -q  x86_64  &&  echo "64位"  ||  echo  "32位"
+2. 检查当前运行的进程数量，如果超过100则给zhsan发一封告警邮件
+# [ $(pgrep  .  | wc -l) -gt 100 ] &&  echo "进程数太多。。。"    |   mail  -s "Alert1"  zhsan
+
+3. 检查当前用户是否root，如果是显示OK，否则提示“权限不足”
+# [  "$USER"  ==  "root" ]  &&  echo  OK  ||  echo  "权限不足"
+
+4. 检查/etc/hostname文件是否存在，如果不存在则建立此文件，内容为“svr1.tedu.cn”
+[  -f  /etc/hostname  ]  ||  echo  "svr1.tedu.cn"  >  /etc/hostname
+
+5. 检查 /etc/rc.d/rc.local 是否可执行，如果是显示yes，否则为此文件添加可执行权限
+# [  -x  /etc/rc.d/rc.local  ]  &&  echo  yes ||  chmod  +x  /etc/rc.d/rc.local
+
+请思考：
+检查目标IP地址是否能ping通，如果能通则提示"Host ... is up "，否则提示"Host ... is down"
+
+# vim pinghost.sh 
+#!/bin/bash
+ping -c4 -i0.2  -W2 $1 &> /dev/null  &&  echo "Host $1 is up" || echo "Host $1 is down"
+
+
+
+命令1  &&  命令2~20  ||  命令21~30
+
+练习：
+编写一个快速添加用户账号的脚本 /root/myuad
+1）执行 /root/myuad 用户名，自动添加此用户账号，并且把密码设置成123456
+2）如果执行脚本时没有提供用户名，需要提示用法，然后退出脚本
+#!/bin/bash
+if [ $#  -eq  0  ]
+then
+	echo  "Usage:$0  username"
+	exit  1
+fi
+useradd  $1
+echo  123456 | passwd --stdin $1
+
+
+#!/bin/bash
+if  ping -c4 -i0.2  -W2 $1 &> /dev/null
+then
+  echo "Host $1 is up" 
+else
+  echo "Host $1 is down"
+fi
+
+
+
+练习：
+检查一个网站是否可访问，如果是提示OK，否则提示“网站不可用”
+#!/bin/bash
+if  wget  目标网址  &> /dev/null
+then
+	echo  OK
+else
+	echo  网站不可用
+fi
+
+
+
+if  目标任务是一个高富帅  1
+then
+	马上领证
+elif  高富  2
+then  先处着
+elif  高帅  3
+then  先处着
+else 
+	一边去
+fi
+
+
+http://172.40.50.113/note/SHELL-DAY02.txt
+
+练习：石头剪刀布的脚本
+1）执行脚本  stone.sh  石头|剪刀|布
+2）脚本随机出拳，将结果与用户的出拳结果对比，反馈结果
+#!/bin/bash
+#由脚本出拳
+i=$[RANDOM%3+1]
+if [ $i -eq 1 ]
+then
+        Y="石头"
+elif [ $i  -eq 2  ]
+then
+        Y="剪刀"
+else
+        Y="布"
+fi
+#echo $Y
+# 由用户出拳
+X=$1
+echo  "电脑出：$Y"
+echo  "用户出：$X"
+
+# 比较输赢
+if  [ "$X" == "$Y" ]
+then
+        echo  "平局"
+elif  [[ "$X" == "石头" &&  "$Y" == "剪刀"  ]]  || [[ "$X" == "剪刀"  &&  "$Y" == "布"  ]]  ||  [[ "$X" == "布" &&  "$Y" == "石头"  ]]
+then
+        echo  "你赢了"
+else
+        echo  "你输了"
+fi
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,172 @@
+
+1.修改防火墙默认的区域为trusted
+[root@server0 ~]# firewall-cmd  --set-default-zone=trusted 
+[root@desktop0 ~]# firewall-cmd  --set-default-zone=trusted 
+
+##########################################################
+ 安全Web服务搭建
+• Public Key Infrastructure,公钥基础设施
+– 公钥:主要用来加密数据
+– 私钥:主要用来解密数据(与相应的公钥匹配)
+– 数字证书:证明拥有者的合法性/权威性(单位名称、
+有效期、公钥、颁发机构及签名、......)
+– Certificate Authority,数字证书授权中心:负责证书
+的申请/审核/颁发/鉴定/撤销等管理工作
+
+
+服务端server:
+1.安装httpd软件
+2.搭建基于域名的虚拟Web主机
+[root@server0 ~]# vim /etc/httpd/conf.d/nsd01.conf
+<VirtualHost *:80>
+   ServerName server0.example.com
+   DocumentRoot /var/www/html
+</VirtualHost>
+
+[root@server0 ~]# echo test01 > /var/www/html/index.html
+3.重起httpd服务
+[root@server0 ~]# systemctl restart httpd
+
+##########################################################
+搭建安全的Web服务
+
+服务端server
+1.部署网站证书(营业执照)
+# cd /etc/pki/tls/certs/
+# wget http://172.25.254.254/pub/tls/certs/server0.crt
+# ls
+
+2.部署网站根证书(公安局信息)
+# cd /etc/pki/tls/certs/
+# wget http://172.25.254.254/pub/example-ca.crt
+# ls
+
+3.部署私钥用于解密
+# cd /etc/pki/tls/private/
+# wget http://172.25.254.254/pub/tls/private/server0.key
+# ls
+
+4.安装支持https软件
+# yum -y install mod_ssl
+
+
+5.修改配置文件
+[root@server0 /]# vim /etc/httpd/conf.d/ssl.conf 
+<VirtualHost _default_:443>
+
+ DocumentRoot "/var/www/html"         #去掉开头的#
+ ServerName server0.example.com:443   #去掉开头的#
+
+指定网站证书
+SSLCertificateFile /etc/pki/tls/certs/server0.crt
+
+指定私钥文件
+SSLCertificateKeyFile /etc/pki/tls/private/server0.key
+
+指定根证书
+SSLCACertificateFile /etc/pki/tls/certs/example-ca.crt
+
+6.重起httpd服务,客户端测试
+[root@desktop0 ~]# firefox https://server0.example.com
+
+########################################################
+  邮件系统
+• 电子邮件服务器的基本功能
+  – 为用户提供电子邮箱存储空间(用户名@邮件域名)
+  – 处理用户发出的邮件 —— 传递给收件服务器
+  – 处理用户收到的邮件 —— 投递到邮箱
+                用户发邮件协议:  smtp  端口  25       
+                用户收邮件协议:  pop3  端口  110         imap    端口 143   
+          
+服务端server
+1.安装postfix软件包,提供发邮件功能
+[root@server0 /]# rpm -q postfix
+
+2.修改配置文件/etc/postfix/main.cf
+[root@server0 /]#  vim  /etc/postfix/main.cf
+   补充: vim 末行模式   输入  : set  nu   可以为每一行加上行号
+
+  99  myorigin = server0.example.com   #默认补全域名后缀
+  116 inet_interfaces = all            #本地所有网络接口均支持
+  164 mydestination = server0.example.com  #判断为本域邮件
+
+3. 重起postfix服务
+[root@server0 /]# systemctl restart postfix
+#########################################################
+
+ 创建邮箱帐号
+[root@server0 /]# useradd yg
+[root@server0 /]# useradd xln
+
+  测试邮件的收发
+• mail 发信操作
+  – mail -s  '邮件标题'    -r   发件人      收件人 [@收件域]... 
+
+• mail 收信操作
+  – mail  [-u 用户名]
+
+[root@server0 /]# mail -s '九阳豆浆机'  -r yg  xln
+hahaxixihehelele 
+.
+EOT
+[root@server0 /]# mail -u xln
+Heirloom Mail version 12.5 7/5/10.  Type ? for help.
+"/var/mail/xln": 1 message 1 new
+>N  1 yg@server0.example.c  Fri Dec 29 12:03  18/611   
+& 1   #输入邮件的编号可以查看邮件信息
+
+    quit为退出
+#########################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+

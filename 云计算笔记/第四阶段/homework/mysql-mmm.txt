@@ -1,0 +1,39 @@
+一、配置主从同步
+1 配置mysql主主结构
+2 配置mysql一主多从结构
+3 验证主从同步配置
+二、配置高可用集群
+a)安装依赖的软件包
+1  yum  -y  install  perl-*   运行环境包
+2  yum  -y  install  gcc-c++  编译包
+3  服务启动依赖的包
+4  获取vip地址的软件名包
+b) 修改配置文件
+1 修改mmm_agent.conf
+2 修改mmm_mon.conf  --->monitor
+3 修改mmm_common.conf ---> agnet   
+4 根据配置文件的设置添加对应的授权用户
+c)启动服务
+1  /etc/mysql-mmm-agent  start
+2  /etc/mysql-mmm-monitor start
+三、验证配置
+a)50#mmm_control    show
+b)50#mmm_control    set_online  主机名
+c)10/20/30/40#ip  addr   show | grep  192.168.4
+d)10/20/30/40#grant  all on  gamedb.*  to  jing@"%" 
+
+identified by "123456";
+
+e)254#mysql  -h192.168.4.100  -ujing   -p123456
+           mysql> create database  gamedb;
+           mysql> create  table  gamedb.a(id int);
+           mysql>  insert into  gamedb.a values(1111);
+
+f)10/20/40#mysql  -uroot -p123456
+                  mysql> select  * from  gamedb.a;
+
+g)30#systemctl  stop  mysqld
+h)50#mmm_control    show
+i) 40#ip addr show  | grep  192.168.4
+j)254#mysql  -h192.168.4.100  -ujing   -p123456
+           mysql> select  * from  gamedb.a;

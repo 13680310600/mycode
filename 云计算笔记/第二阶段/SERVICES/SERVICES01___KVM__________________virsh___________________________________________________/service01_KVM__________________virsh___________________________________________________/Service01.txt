@@ -1,0 +1,254 @@
+
+
+
+
+
+
+  手动安装一台虚拟机,操作系统为RHEL7.2
+        1.虚拟机的名字: nsd 
+        2.硬盘9G即可
+        3.网络类型选择: private1
+        3.自动分区
+        4.软件包选择:  带GUI的服务器
+    
+####################################################
+虚拟机nsd:搭建Yum仓库
+
+  服务端:真机利用Web共享光盘内容
+  1.安装httpd
+ [root@room9pc14 桌面]# rpm -q httpd
+ httpd-2.4.6-40.el7.x86_64
+
+  2.重起httpd服务
+ [root@room9pc14 桌面]# systemctl restart httpd
+
+  3.利用httpd服务共享光盘内容
+  # ls /mnt/
+  # mount /ISO/rhel-server-7.2-x86_64-dvd.iso    /mnt/
+  # ls /mnt/
+
+  # mkdir /var/www/html/rhel7
+  # cp -r /mnt/*   /var/www/html/rhel7
+  # ls /var/www/html/rhel7/
+  # firefox  127.0.0.1/rhel7
+
+  客户端:虚拟机nsd
+  1.配置虚拟机nsd的IP地址 192.168.4.168/24
+  2.虚拟机的网络类型必须为 private1
+  3.虚拟机nsd测试
+ [root@localhost 桌面]# firefox 192.168.4.254/rhel7
+  4.书写客户端文件
+ [root@localhost 桌面]# rm -rf /etc/yum.repos.d/*
+ [root@localhost 桌面]# vim /etc/yum.repos.d/dvd.repo
+    [dvd]
+    name=rhel7
+    baseurl=http://192.168.4.254/rhel7
+    enabled=1
+    gpgcheck=0
+ [root@localhost 桌面]# yum  repolist
+
+#######################################################
+ KVM虚拟化
+
+虚拟化概述
+• virtualization 资源管理
+  – x个物理资源 --> y个逻辑资源
+    – 实现程度:完全、部分、硬件辅助(CPU)
+
+
+yum软件组管理(续1)
+• 使用RHEL7软件仓库的预设分组
+  – yum groups list [hidden] [组名]...
+  – yum groups info [组名]...       #查看包组的信息
+  – yum groups install [组名]...
+  – yum groups remove [组名]...
+
+安装虚拟化服务器平台
+• 主要软件组
+ Virtualization\ Client      #虚拟化客户端
+ Virtualization\ Platform    #虚拟化平台
+ Virtualization\ Hypervisor  #虚拟化管理器
+ Virtualization\ Tools       #虚拟化工具
+
+# yum repolist
+# yum -y groups install  V(tab)  然后连续按两次Tab键 
+
+
+ [root@localhost 桌面]# virt-manager    #显示虚拟系统管理器
+
+
+桌面图标存放地方
+ [root@localhost 桌面]#  /usr/share/applications/
+
+#####################################################
+
+ 虚拟化服务：libvirtd
+
+######################################################
+以nsd虚拟机作为模版,会快速新建虚拟机
+  所以删除channel设备,有标识性
+
+######################################################
+
+命令行管理虚拟机
+
+• 列出虚拟机
+– virsh list [--all]
+
+• 查看指定虚拟机的信息
+– virsh dominfo 虚拟机名称
+
+• 强制关闭指定的虚拟机
+– virsh destroy 虚拟机名称
+
+[root@room9pc14 桌面]# virsh list         #显示虚拟机
+[root@room9pc14 桌面]# virsh destroy nsd  #强制关闭虚拟机nsd
+[root@room9pc14 桌面]# virsh list --all   #显示虚拟机包括未运行的
+
+[root@room9pc14 桌面]# virsh start nsd    #开启虚拟机nsd
+[root@room9pc14 桌面]# virsh list --all
+
+[root@room9pc14 桌面]# virsh autostart nsd   #让nsd虚拟机随机自起
+[root@room9pc14 桌面]# virsh dominfo nsd     #查看虚拟机nsd信息
+
+    # virsh autostart --disable nsd          #关闭随机自起
+
+    # virsh dominfo nsd                      #查看虚拟机nsd信息
+
+######################################################
+
+
+• 一台KVM虚拟机的组成
+   – xml配置文件(虚拟机描述文件):定义虚拟机的名称、UUID、CPU、内
+存、虚拟磁盘、网卡等各种参数设置
+   虚拟机描述文件 默认路径:/etc/libvirt/qemu
+
+     – 磁盘镜像文件:保存虚拟机的操作系统及文档数据,
+镜像路径取决于xml配置文件中的定义
+       磁盘镜像文件  默认路径:/var/lib/libvirt/images/
+
+########################################################
+快速以nsd为模版,创建一台有系统的虚拟机test01
+1.创建新的磁盘镜像文件
+[root@room9pc14 桌面]# cd /var/lib/libvirt/images/
+[root@room9pc14 images]# cp  nsd.qcow2   test01.qcow2
+
+2.创建新虚拟机描述文件
+[root@room9pc14 images]# cd /etc/libvirt/qemu/
+[root@room9pc14 qemu]# cp  nsd.xml  test01.xml
+[root@room9pc14 qemu]# vim test01.xml   
+  修改虚拟机名字, 删除UUID整行内容,磁盘文件的路径名称,删除MAC地址整行内容
+                  
+3.导入虚拟机
+  # virsh  define  /etc/libvirt/qemu/test01.xml   #导入虚拟机
+  # virsh  list  --all
+  # virsh  start  test01
+
+##########################################################
+COW 写时复制
+• Copy On Write,写时复制
+   – 直接映射原始盘的数据内容
+   – 对前端盘的修改不回写到原始盘
+
+快速以nsd为模版,创建一台有系统的虚拟机test01
+1.创建新的磁盘镜像文件
+[root@room9pc14 桌面]#  cd /var/lib/libvirt/images/
+# qemu-img  create  -f   格式    -b  原始盘名称    前端盘名称
+# qemu-img  create  -f  qcow2  -b  nsd.qcow2   new01.qcow2
+# qemu-img  info   new01.qcow2
+
+2.创建新虚拟机描述文件
+[root@room9pc14 images]# cd /etc/libvirt/qemu/
+[root@room9pc14 qemu]# cp  nsd.xml  new01.xml
+[root@room9pc14 qemu]# vim new01.xml   
+  修改虚拟机名字, 删除UUID整行内容,磁盘文件的路径名称,删除MAC地址整行内容
+                  
+3.导入虚拟机
+  # virsh  define  /etc/libvirt/qemu/new01.xml   #导入虚拟机
+  # virsh  list  --all
+  # virsh  start  new01
+#########################################################
+ 补充:删除虚拟机
+  # virsh undefine test01
+  # rm -rf /var/lib/libvirt/images/test01.qcow2
+
+##################################################
+• 使用 guestmount 工具
+– 支持离线挂载 raw、qcow2 格式虚拟机磁盘
+– 可以在虚拟机关机的情况下,直接修改磁盘中的文档
+– 方便对虚拟机定制、修复、脚本维护
+
+
+• 基本用法
+   guestmount -a  虚拟机磁盘路径    -i  /挂载点
+
+[root@room9pc14 /]# guestmount  -o  nonempty -a /var/lib/libvirt/images/nsd.qcow2 -i /mnt/
+
+################################################
+ 搭建新的教学环境
+
+[root@room9pc14 /]# clone-vm7 
+Enter VM number: 8
+
+[root@room9pc14 /]# clone-vm7 
+Enter VM number: 9
+
+
+  利用root登陆  密码 123456
+
+  虚拟机A:
+   1.配置eth0的IP地址 192.168.4.7/24
+   2.真机运程管理
+   3.修改主机名要求永久有效 /etc/hostname  svr7.tedu.cn
+   4.永久修改SELinux状态 Permissive
+   5.修改防火墙默认区域为trused 
+   6.请以真机Web服务器为Yum源,搭建虚拟机Yum仓库
+
+  虚拟机B:
+   1.配置eth0的IP地址 192.168.4.207/24
+   2.真机运程管理
+   3.修改主机名要求永久有效 /etc/hostname  pc207.tedu.cn
+   4.永久关闭SELinux Permissive
+   5.修改防火墙默认区域为trused 
+   6.请以真机Web服务器为Yum源,搭建虚拟机Yum仓库
+
+#########################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
