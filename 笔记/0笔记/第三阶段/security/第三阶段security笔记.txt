@@ -5,6 +5,27 @@
 
 一、Linux基本防护措施
 
+<------##
+    ·chage : 修改用户账户属性命令	  配置文件：/etc/login.defs
+	-格式：chage -l 账户名 				   #查看账户信息
+	     chage –E 时间(2015-05-15) 账户名称                  #修改账户有效期	
+	passwd -l 用户名                           #锁定用户账号lock
+	passwd -S 用户名                           #查看状态status
+ 	passwd -u 用户名                           #解锁用户账号
+
+    ·/etc/issue 配置文件：修改tty登陆的提示信息
+
+    ·chattr ： 文件权限设置命令  
+	-格式：chattr +i 文件名			#锁定文件（无法修改、删除等）
+	     chattr -i  文件名                      #解锁文件
+	     chattr +a  文件名                    #锁定后文件仅可追加
+	     chattr -a  文件名                    #解锁文件
+	     lsattr 文件名                         #查看文件特殊属性
+
+     ·softadm管理系统服务的权限	sudo配置文件：/etc/sudoers
+	sudo分配管理权限（看案例）
+##------->
+
 Linux系统的基本防护措施，完成以下任务：
 
     修改用户zhangsan的账号属性，设置为2019-12-31日失效（禁止登录）
@@ -64,6 +85,277 @@ Linux系统的基本防护措施，完成以下任务：
 
 
 
+_____________________________________________________________________________
+——————————————————————————————————————————————————————————
+
+4月16号 day02
+
+   ·MD5校验文件：	-格式： md5sum 文件名		#没改变时 这个文件的md5值不会变
+
+   ·gpg对称加密：	
+	-需要安装软件： gnupg2	{gpg (GnuPG) 2.0.22}
+     ·gpg加密数据： gpg -c 文件名				#生成 文件名.gpg 的文件
+     ·gpg解密数据： gpg -d 文件名.gpg > 文件名 		#解密后保存
+
+   ·gpg非对称加密：  （公钥私钥）
+	·gpg --gen-key 				#创建公,私密钥
+	·gpg --list-keys                      #查看公钥环
+	·gpg --list-secret-keys			#查看私钥环
+	·gpg -a --export 公钥 > 公钥.pub	
+	  --export作用是导出公钥，-a的作用是导出密钥存储为ASCII格式
+
+	·gpg --import 公钥.pub			#--import 导入公钥
+	·gpg -e -r UserA love.txt		#使用此密钥加密文件
+
+   ·gpg签名机制：
+	·gpg -b 软件包(log.tar)		#创建分离式数字签名 ，生成多一个软件包.sig
+	
+	·验证软件包签名：	
+		 gpg --verify  软件包.sig 软件包
+
+
+   ·AIDE入侵检测系统：
+	-需要安装软件：	aide	
+	·aide配置文件/etc/aide.conf	#设置对那些数据进行校验
+	·生成初始化数据库：aide --init	#数据保存在/var/lib/aide/aide.db.new.gz
+	·备份数据库 ： cp /var/lib/aide/aide.db.new.gz /my/
+	·入侵后检查：mv /var/lib/aide/aide.db.new.gz /var/lib/aide/aide.db.gz
+	·aide --check	#查看那些数据发生变化
+
+
+   ·NMAP扫描抓包
+	-需要软件：nmap	-格式用法：nmap [类型] [选项]  扫描目标	#看下面案例
+
+   ·tcpdump命令工具： 可以过滤条件	#看下面案例
+	
+
+
+一、加密与解密应用
+
+
+·用gpg工具实现加/解密及软件签名等功能，分别完成以下任务：
+    检查文件的MD5校验和
+    使用GPG实现文件机密性保护，加密和解密操作
+    使用GPG的签名机制，验证数据的来源正确性
+
+gpg -c  #对称加密
+gpg -e  #非对称加密
+gpg -a  #加密之后加成ASCII码
+gpg -r  #
+
+
+
+步骤一：检查文件的MD5校验和
+	
+	a).查看文件改动前的校验和，复制为新文件其校验和不变
+	  
+
+
+	b).对文件内容稍作改动，再次检查校验和，会发现校验和已大不相同
+
+
+
+步骤二：使用GPG对称加密方式保护文件
+
+	a).确保已经安装了相关软件（默认已经安装好了）
+	  yum –y install gnupg2           #安装软件
+	  gpg –version                    #查看版本
+
+
+	b).gpg使用对称加密算法加密数据的操作
+	  gpg -c file2.txt
+	#输入密码，自己设置	然后会生成一个 file2.txt.gpg加密文件
+
+	c).使用gpg对加密文件进行解密操作
+	  cat file2.txt.gpg                    #查看加密数据为乱码
+	  gpg -d file2.txt.gpg > file2.txt     	#解密后保存,解密时输入密码
+	  cat file2.txt                     	#查看解密后的文件
+
+
+步骤三：使用GPG非对称加密方式保护文件
+
+	a).接收方UserA创建自己的公钥、私钥对(在192.168.4.100操作)
+	    执行gpg --gen-key操作，根据提示选择并创建密钥：
+	  gpg --gen-key
+
+
+	b).UserA导出自己的公钥文件(在192.168.4.100操作)
+	    用户的公钥、私钥信息分别保存在pubring.gpg和secring.gpg文件内：
+	   gpg --list-keys                          #查看公钥环
+	   gpg --list-secret-keys                   #查看私钥环
+
+
+	  使用gpg命令结合--import选项将其中的公钥文本导出，传给发送方UserA：
+	   gpg -a --export UserB > /tmp/UserA.pub
+		#--export的作用是导出密钥，-a的作用是导出的密钥存储为ASCII格式
+	   scp /tmp/UserA.pub 192.168.4.5:/tmp/    //将密钥传给UserB
+
+	c).UserB导入接收的公钥信息
+	   使用gpg命令结合--import选项导入发送方的公钥信息，以便在加密文件时指定对应的公钥。
+	  gpg --import /tmp/UserA.pub
+
+	
+	d).UserB使用导入的公钥加密数据，并把加密后的数据传给UserA
+	  echo "I love you ." > love.txt
+	  gpg -e -r UserA love.txt
+		无论如何还是使用这把密钥吗？(y/N)y                 #确认使用此密钥加密文件
+	  scp love.txt.gpg  192.168.4.100:/root    		#加密的数据传给UserA
+
+
+	e).UserA以自己的私钥解密文件
+	  gpg -d love.txt.gpg > love.txt	#要验证私钥口令
+	  cat love.txt                        #获得解密后的文件内容
+
+
+步骤四：使用GPG的签名机制，检查数据来源的正确性
+
+	使用私钥签名的文件，是可以使用对应的公钥验证签名的，只要验证成功，
+	则说明这个文件一定是出自对应的私钥签名，除非私钥被盗，否则一定能证明这个文件来自于某个人！
+
+	a).在client(192.168.4.100)上，UserA为软件包创建分离式签名
+	   将软件包、签名文件、公钥文件一起发布给其他用户下载。
+	  tar zcf log.tar /var/log            #建立测试软件包
+	  gpg -b log.tar                      #创建分离式数字签名
+	  scp log.tar* 192.168.4.5:/root      #将签名文件与签名传给UserB
+
+	
+	b).在192.168.4.5上验证签名
+	  gpg --verify log.tar.sig log.tar 	#校验
+
+
+
+
+二、使用AIDE做入侵检测
+
+    安装aide软件
+    执行初始化校验操作，生成校验数据库文件
+    备份数据库文件到安全的地方
+    使用数据库执行入侵检测操作
+
+
+步骤一：部署AIDE入侵检测系统
+	
+	a).安装软件包
+	  yum -y install aide
+
+
+	b).修改配置文件 	#确定对哪些数据进行校验，如何校验数据
+	  vim /etc/aide.conf
+	@@define DBDIR /var/lib/aide                            #数据库目录
+	@@define LOGDIR /var/log/aide                           #日志目录
+	database_out=file:@@{DBDIR}/aide.db.new.gz              #数据库文件名
+		#一下内容为可以检查的项目（权限，用户，组，大小，哈希值等）
+	#p:      permissions
+	#i:       inode:
+	#n:      number of links
+	#u:      user
+	#g:      group
+	#s:       size
+	#md5:    md5 checksum
+	#sha1:    sha1 checksum
+	#sha256:        sha256 checksum
+	FIPSR = p+i+n+u+g+s+m+c+acl+selinux+xattrs+sha256
+		#一下内容设置需要对哪些数据进行入侵校验检查
+		#注意：为了校验的效率，这里将所有默认的校验目录与文件都注释
+		#仅保留/root目录
+	#/boot   NORMAL                                   #对哪些目录进行什么校验
+	#/bin    NORMAL
+	#/sbin   NORMAL
+	#/lib    NORMAL
+	#/lib64  NORMAL
+	#/opt    NORMAL
+	#/usr    NORMAL	
+	/root   NORMAL
+	#!/usr/src                                        #使用[!]，设置不校验的目录
+	#!/usr/tmp
+
+
+步骤二：初始化数据库，入侵后检测
+
+	a).入侵前对数据进行校验，生成初始化数据库
+	   aide --init
+		AIDE, version 0.15.1
+		AIDE database at /var/lib/aide/aide.db.new.gz initialized.
+	   #生成校验数据库，数据保存在/var/lib/aide/aide.db.new.gz
+
+
+	b).备份数据库，将数据库文件拷贝到U盘（非必须的操作）
+	  cp /var/lib/aide/aide.db.new.gz   /media/
+
+
+	c).入侵后检测
+	  cd /var/lib/aide/
+	  mv aide.db.new.gz aide.db.gz
+ 	  aide --check                            #检查哪些数据发生了变化
+
+
+
+三、扫描与抓包分析
+
+    使用NMAP扫描来获取指定主机/网段的相关信息
+    使用tcpdump分析FTP访问中的明文交换信息
+
+
+步骤一：使用NMAP扫描来获取指定主机/网段的相关信息
+
+	a).安装软件
+	  yum –y install nmap
+		#基本用法：
+		# nmap  [扫描类型]  [选项]  <扫描目标 ...>
+		#常用的扫描类型
+		# -sS，TCP SYN扫描（半开）
+		# -sT，TCP 连接扫描（全开）
+		# -sU，UDP扫描
+		# -sP，ICMP扫描
+		# -A，目标系统全面分析
+	  nmap -sP 192.168.0.0/16	#ping 192.168.0.0/16网段 看那些主机开着的
+
+	
+	b).检查目标主机所开启的TCP服务
+	  nmap 192.168.4.100
+
+
+	c).检查192.168.4.0/24网段内哪些主机开启了FTP、SSH服务
+	  nmap -p 21-22 192.168.4.0/24
+
+
+	d).检查目标主机所开启的UDP服务
+	  nmap   -sU  svr7.tedu.cn                #指定-sU扫描UDP
+
+	
+	e).检查192.168.4.0/24网段内哪些主机可以ping通
+	  nmap  -n  -sP  192.168.4.0/24
+
+	
+	f).全面分析目标主机192.168.4.100的操作系统信息
+	  nmap -A 192.168.4.100,5
+
+
+
+步骤二：使用tcpdump分析FTP访问中的明文交换信息
+
+	a).启用tcpdump命令行抓包
+		执行tcpdump命令行，添加适当的过滤条件，只抓取访问主机192.168.4.100的21端口的数据通信 ，
+		并转换为ASCII码格式的易读文本。
+	   tcpdump -A host 192.168.4.5 and tcp port 21
+		.. ..                                            #进入等待捕获数据包的状态
+		#监控选项如下：
+		# -i，指定监控的网络接口
+		# -A，转换为 ACSII 码，以方便阅读	tcpdump -A 
+		# -w，将数据包信息保存到指定文件	tcpdump -w 文件名(abc.log)
+		# -r，从指定文件读取数据包信息		tcpdump -r 文件名(abc.log)
+		#tcpdump的过滤条件：
+		# 类型：host、net、port、portrange
+		# 方向：src、dst
+		# 协议：tcp、udp、ip、wlan、arp、……
+		# 多个条件组合：and、or、not
+	
+
+	b).执行FTP访问，并观察tcpdump抓包结果
+		参考前面的测试操作，再次从客户机192.168.4.100访问主机192.168.4.5的vsftpd服务。
+		然后使用tcpdump抓包，仔细分析FTP连接的建立过程、确认收集到的用户名和口令信息。
+	  tcpdump  -A  -w  ftp.cap  host 192.168.4.5  and  tcp  port  21      #抓包并保存
+	  tcpdump  -A  -r  ftp.cap | egrep  '(USER|PASS)'    			#分析数据包
 
 
 
@@ -75,49 +367,7 @@ Linux系统的基本防护措施，完成以下任务：
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+vim中的全部注释快捷方式： ctrl+v，向下按键，大写I，一个#号，Esc
 
 
 
