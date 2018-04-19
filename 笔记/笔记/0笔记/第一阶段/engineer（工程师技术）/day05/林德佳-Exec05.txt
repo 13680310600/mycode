@@ -1,0 +1,100 @@
+案例练习,准备:
+        rht-vmctl  reset  server
+	    rht-vmctl  reset  desktop
+######################################################
+案例1:在在 server0、desktop0 上操作
+– 将防火墙默认区域设置为trusted
+	firewall-cmd --set-default-zone=trusted
+
+
+案例2:在server上操作，搭建mariadb数据库系统
+1. 在 server0 上安装 MariaDB 数据库系统
+1)安装 mariadb-server mariadb软件包
+	yum -y install mariadb-server mariadb
+2)启动 mariadb 服务
+	systemctl restart mariadb
+
+
+案例3:在server上操作，配置一个数据库
+– 为mariadb数据库账户root设置登陆密码为:haxi
+	mysqladmin -uroot password 'haxi'
+
+– 新建一个数据库名为nsd
+	mysql -uroot -phaxi
+	create database nsd;
+
+– 除了root用户,此数据库只能被用户lisi查询,此用户的密码为123(用户的授权)
+	MariaDB [(none)]> grant insert on nsd.* 	  
+		  -> to lisi@'localhost' 		
+		  -> identified by '123';
+
+– 数据库nsd中应该包含来自备份数据库的内容,
+  备份数据库URL为:http://classroom/pub/materials/users.sql
+  说明:使用备份文件，将数据还原到nsd数据库中
+	wget http://classroom/pub/materials/users.sql
+	mysql -uroot -phaxi nsd < users.sql
+
+案例4:在server上操作，使用数据库查询
+
+1)查询密码是solicitous的人的名字?
+	MariaDB [nsd]> select * from nsd
+		-> where password='solicitous';
+
+2)有多少人的姓名是Barbara同时还居住在Sunnyvale?
+	MariaDB [nsd]> select * from nsd
+		-> where name='Barbara'
+		-> and city='Sunnyvale' ;
+
+
+案例5:虚拟机 server0操作， /dev/vdb 上按以下要求建立分区：
+
+采用默认的 msdos 分区模式 
+– 第1个分区 /dev/vdb1 的大小为 3G		
+– 第2个分区 /dev/vdb2 的大小为 200M
+– 第3个分区 /dev/vdb3 的大小为 100M
+– 第4个分区 /dev/vdb4为扩展分区
+– 在划分三个分区逻辑分区/dev/vdb[5-6]，
+– 分区大小依次为500M、2000M
+
+	fdisk	/dev/vdb
+	n	回车到Last输入：  +3G
+	n	回车到Last输入：  +200M
+	n	回车到Last输入：  +100M
+	n	回车到结束
+	n	回车到最后：  +500M
+	n	回车到最后：  +2000M
+	w
+	
+
+案例6：发布iSCSI网络磁盘
+
+ 1）配置 server0 提供 iSCSI 服务，要求如下：
+ 2）磁盘名为iqn.2018-02.com.example:server0
+ 3）服务端口为 3260
+ 4）使用 iscsi_store（后端存储的名称）作其后端存储设备的名称，其大小为 3GiB
+ 5）此磁盘服务只能被desktop0.example.com访问，在Server0上配置客户端ACL为iqn.2016-02.com.example:desktop0
+ 
+	yum -y install targetcli
+	targetcli
+	/> ls
+	/> backstores/block create iscsi_store /dev/vdb1 
+	/> iscsi/ create iqn.2018-02.com.example:server0
+	/> iscsi/iqn.2018-02.com.example:server0/tpg1/luns create /backstores/block/iscsi_store 
+	/> iscsi/iqn.2018-02.com.example:server0/tpg1/acls create iqn.2016-02.com.example:desktop0
+	/> iscsi/iqn.2018-02.com.example:server0/tpg1/portals create 172.25.0.10
+	
+6）配置 desktop0 使用 server0 提供 iSCSI 服务
+	
+	yum -y install iscsi-initiator-utils
+	vim /etc/iscsi/initiatorname.iscsi			
+		     nitiatorName=iqn.2018-02.com.example:desktop0
+	:wq
+	man iscsiadm 在最后，找到参考命令
+	iscsiadm --mode discoverydb --type sendtargets --portal 172.25.0.11 --discover
+iscsiadm --mode node --targetname iqn.2018-02.com.example:data --portal 172.25.0.11:3260 --login
+	systemctl restart iscsid
+
+
+
+
+

@@ -1,0 +1,39 @@
+1.Linux中部署DNS服务需要安装的软件有哪些？
+ bind  bind-chroot
+
+2.DNS服务使用的端口号？
+   53
+
+3.Linux中如何重启DNS服务?
+ systemctl  restart  named
+						
+4.Linux中部署DNS服务，其主配置文件在哪里？
+  /etc/named.conf
+
+5.指定本机DNS服务器地址配置文件在哪里？
+   /etc/resolv.conf
+
+6.测试域名是否能够解析的命令？
+    nslookup
+
+7.DNS服务的作用？
+   正向解析 与 反向解析
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

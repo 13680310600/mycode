@@ -1,0 +1,155 @@
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++														      +
++						day10-安全与防火墙基础                                             	
++												by:notebook	     +
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+selinux的运行模式	
+	-enforcing(强制模式)permissive(宽松)
+	-disabled(彻底禁止)
+
+切换运行模式
+	临时切换setenforce 1｜0
+	固定配置文件:/etc/selinux/config
+
+防火墙的策略管理
+	作用：隔离
+	硬件防火墙
+	软件防火墙
+
+搭建基本的Web
+	当今世界3大web：httpd Nginx Tomcat
+	服务端：server0.example.com
+	客户端：server0.example.com
+		-> 默认网页文件路径：/var/www/html
+		-> 默认网页文件名字：index.html
+		-> 默认书写网页内容的语言：html
+vim /var/www/html/index.html
+<marquee><font color=blue><h1>名字
+   滚动           字体颜色     最大字体
+
+搭建基本的FTP
+	启动安装服务端软件：vsftpd
+	开机与启动
+	默认共享路径：/var/ftp
+
+rhel7的防火墙
+系统服务：firewalld
+管理工具：firewall-cmd firewall-config
+根据所在胡网络所区分，预设保护规则
+	-> public：仅仅允许访问本机的SSHD等少数几个服务
+	-> trusted：允许任何访问
+	-> block：阻塞任何来访问的请求（明确拒绝，客户端会接受到拒绝）
+	-> drop：丢弃任何来访问的数据包（直接丢弃，节省服务器胡资源）
+宽松模式：默认区域的trusted，将想要拒绝的源IP放入到block或drop
+严格模式：默认区域胡block和drop，将想要允许胡源IP地址放入到trusted
+配置规则的位置
+	运行时：runtime
+	永久：permanment
+
+规则匹配：原则问题，匹配及停止
+
+防火墙判断进入哪一个区域的规则
+	1.查看客户机请求数据包中，源IP规则，查看自己所有的区域，哪一个区域，有该源IP地址的策略
+
+	实际操作：
+		－ firewall-cmd --set-default-zone=public   # 设置允许部分访问
+		－ firewall-cmd --set-default-zone=block    # 设置拒绝
+		－ filewall-cmd --set-default-zone=drop    	# 丢弃
+		－ filewall-cmd --get-default-zone		# 显示当前的区域
+
+		－ firewall-cmd --zone=public --add-service=http
+		－ firewall-cmd --zone=public --list-all
+		－ firewall-cmd --zone=public --add-service=ftp
+		－ firewall-cmd --zone=public --list-all
+		－ firefox ftp:172.25.0.11				# 查看ftp 
+		－ firefox 172.25.0.11 					# 查看Http
+		
+防火墙永久配置
+	-> 永久--permanent
+	-> 实例
+ 	  －firewalld-cmd --permanent --zone=public --add-service=http  	＃ 添加永久命令
+    	  －firewalld-cmd --permanent --zone=public --add-service=ftp		＃ 同上
+	  －firewalld-cmd --reload	# 重载防火墙
+	  －firewalld-cmd --zone=public --list-all
+
+防火墙对源IP地址的控制
+	-> 希望真机可以访问172.25.0.11的服务
+	-> desktop虚拟机不能访问
+	-> 防火墙判定的规则，默认情况下一个区域中只允许一个IP地址，避免产生冲突
+		－ firewall-cmd --permanent --zone=block --add-source=172.25.0.11
+		－ firewall-cmd --reload
+		－ firewall-cmd --zone=block --list-all
+	-> 删除防火墙策略
+		－ firewall-cmd --permanent --zone=brock --remove-source=172.25.0.11
+		－ firewall-cmd --reload
+		－ firewall-cmd --zone=brock --list-all
+
+端口：数字 编号 标识进程和程序
+IP地址的作用：唯一标识网络中一个节点的地址(官方回答)
+	       在互联网中其他机器寻找到我的位置方便与我进行通讯(民间)
+
+主机间相互通讯的准则：
+	源IP地址 目标IP地址 数据 目标端口号
+常见的默认端口号：
+	http：80	Ftp:21
+常用的9大协议：
+	http ftp https tftp telnet DNS smtp snmp po3
+端口转发
+	虚拟机desktop0：172.25.0.11:5423 --> 172.25.0.11（firewalld） --> 172.25.0.11：80
+
+-> firewall-cmd --permansent --zone=public --add-forward-port=port=5423:proto=tcp:tcport=80
+-> firewall-cmd --reload
+-> firewall-cmd --zone=public --list-all
+-> desktop --> firefox 172.25.0.11:5423
+firewall-cmd --permansent --zone=public --remove-forward-port=port=5423:proto=tcp:tcport=80	
+ 
+配置用户环境
+影响指定的用户的bash解释环境
+	-> 用户家目录/.bashrc,每次开机bash终端时生效
+	-> /etc/bashrc,每次开启bash终端生效
+
+配置高级链接(聚合链接 网卡绑定 链路聚合)
+	-> 热备份(activebackup)连接冗余(活跃状态 备份状态)
+	-> 轮询式(roundorbin)的负载均衡
+	    192.168.2.20   192.168.2.11
+		eth1		eth2
+		 ｜              ｜
+		 ｜________｜
+			  |		       ____
+	      team虚拟网卡master	<----|    | 外网访问
+		   192.168.2.220	       －－－
+											
+nmcli命令行的配置
+	-> 制作网卡绑定
+	-> 制作虚拟网卡 -> man teamd.conf -> 查找/example -> n 跳转下一个 
+	-> 寻找到 -> "runner": {"name": "activebackup"}
+	1.虚拟网卡team0
+	nmcli connection add type team autoconnect yes con-name team0 ifname team0 config '{"runner": {"name": "activebackup"}}'   # 热备份
+	nmcli connection
+	2.添加成员
+	nmcli connection add type team-slave con-name team0-1 ifname eth1 master team0  #添加成员
+	nmcli connection add type team-slave con-name team0-2 ifname eth2 master team0  #添加成员
+	3.配置team0
+	nmcli connection modify team0 ipv4.me   thod manual ipv4.addresses '192.168.1.1/24' connection.autoconnect yes    # 配置IP地址
+	4.启动激活
+	nmcli connection up team0
+	nmcli connection up team0-1
+	nmcli connection up team0-2
+	
+如果你错了
+	删除重新来
+	nmcli connection delete team0
+	nmcli connection delete team0-1
+	nmcli connection delete team0-2
+	专用于team测试查看的命令
+	teamdctl team0 state   ＃ 查看网卡的信息
+	ifconfig eth1 down     # 禁用eth1网卡
+	
+
+
+
+
+
+
+
+

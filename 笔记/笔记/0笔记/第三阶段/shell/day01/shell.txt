@@ -1,0 +1,195 @@
+庞丽静   静静老师
+shell  day01  day02
+++++++++++++++++++++++++++
+45分钟     15分钟
+8:30        14:00
+++++++++++++++++++++++++++
+ftp://172.40.50.117/nsd1801/shell/
+
+shell day01
+一、编写及执行shell脚本
+二、shell变量 *
+
++++++++++++++++++++++++++
+一、编写及执行shell脚本
+1.1   什么是shell ?  命令行解释器
+1.2   什么脚本？  实现某种功能的有执行权限的文件
+1.3   怎么写shell脚本
+
+vim   名.sh
+#!/bin/bash
+功能代码
+:wq
+
+1.4  怎么执行shell脚本
+chmod  +x  名.sh
+./名.sh
+/etc/init.d/名.sh
+
+sh  /etc/init.d/名.sh
+bash  /etc/init.d/名.sh
+
+source   /etc/init.d/名.sh
+.   /etc/init.d/名.sh
+
+执行脚本时 不分配新的资源来执行脚本，而是占用当前终端的资源运行脚本。
+
+内存  cpu
+
+1.5  shell 特性?   /bin/bash
+支持快建键  tab键补齐  历史命令  命令别名   重定义
+			 /etc/bashrc
+			 ~/.bashrc
+                                            
+1.6  如何查看系统支持的shell?  /etc/shells
+
+
+useradd   yaya
+	/bin/bash
+
+useradd  -s  /sbin/nologin    jing
+		/sbin/nologin
+
+++++++++++++++++++++++++++++++++
+二、shell变量 *
+2.1 什么是变量  ：使用固定的字符串存储变化的数据
+2.2 定义变量        变量名=值
+
+2.3 变量的使用规则？ 及 变量名的命名规则？
+
+
+2.4 使用变量
+$变量名
+
+2.5 输出变量的值
+echo  $变量名
+
+2.6  查看已经定义的变量 env    set
+
+2.6 销毁变量
+unset  变量
+
+
+2.7 shell变量类型 
+系统环境变量： 系统启动是读取系统配置文件或服务的配置文件，定义的变量。变量名和存储的值 是固定的，值会根据系统的运行环境和配置自动获取。我们在写脚本时，可以直接使用系统环境变量，也可以修改系统环境变量的值，变量名通常用大小字母表示。
+$PATH    $PWD   $USER        $HOME   
+$HOSTNAME      $SHELL       $MAIL
+
+
+
+
+预定义变量？  /bin/bash  这种shell程序内置的变量，变量值是根据系统环境自动获取。   $0  $$   $?   $!   $#   $*  
+
+位置变量?  $1  $2   ..... $9  ${10} ${11}
+
+自定义变量: 编写脚本时，程序员程序的需要定义的变量。定义变量时，要遵循变量的使用规则。编写脚本时，把变化的数据使用变量表示。
+
+
+给变量赋值的方式？
+1.1 普通赋值    x=19
+
+1.2 从键盘接收数据给变量赋值
+read   -p "提示信息"   -t  10    变量名
+
+1.3 使用一个变量给另一个变量赋值
+x=3
+y=$x
+echo $y
+
+z=$x$y
+echo $z
+
+z=$x0$y
+echo $z
+
+z=${x}0$y
+echo $z
+
+1.4 累加赋值 : 变量自己给自己添加新值
+mkdir  /shell4
+vim /shell4/say.sh
+#!/bin/bash
+echo  "aaa"
+:wq
+chmod  +x  /shell4/say.sh
+
+echo  $PATH
+PATH=/shell4:$PATH
+echo  $PATH
+say.sh
+
+1.5 获取命令的执行结果给变量赋值
+变量名=$(系统命令)
+变量名=`系统命令`
+++++++++++++++++++++++++++
+使用变量时 '' 与""的区别？
+
+++++++++++++++++++++++++++
+vim a.sh   进程    内存  cpu
+#!/bin/bash
+name=aaa
+echo $name
+:wq
+
+chmod +x   a.sh
+
+./a.sh
+
+echo $name
+
+source  a.sh
+echo $name
+
+变量的作用范围？
+在脚本中定义的变量，只在脚本执行过程中有效。
+
+局部变量  :  只能在当前shell
+全局变量 ： 在当前shell和其子shell里都可以使用
+
+export   x=11  定义为全局变量
+export  -n  x    取消全局变量
+
+
+vim /etc/profile
+export  PATH=/shell4:$PATH
+:wq
+source  /etc/profile
+
+vim /etc/bashrc
+export  PATH=/shell4:$PATH
+:wq
+
+auto_web.sh(自动部署网站服务脚本)
+
+vim auto_yum.sh (自动配置yum源脚本)
+#!/bin/bash
+mount  /dev/cdrom   /mnt
+rm  -rf  /etc/yum.repos.d/plj.repo
+echo   "[rhel7]"   >>  /etc/yum.repos.d/plj.repo
+echo   "name=install  rhel7 packages"   >>  /etc/yum.repos.d/plj.repo
+echo   "baseurl=file:///mnt"   >>  /etc/yum.repos.d/plj.repo
+echo   "enabled=1"   >>  /etc/yum.repos.d/plj.repo
+echo   "gpgcheck=0"   >>  /etc/yum.repos.d/plj.repo
+:wq
+]#chmod  +x  auto_yum.sh
+]#sh  auto_yum.sh
+]#yum clean all
+]#yum repolist
+
+++++++++++++++++++++++
+终端显示控制
+关闭显示  stty  -echo
+恢复显示  stty  echo
+
+
+
+
+
+
+
+
+
+
+
+
+
