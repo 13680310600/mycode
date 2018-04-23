@@ -1,0 +1,354 @@
+
+
+4月23号 day01
+
+
+		   				·mysql数据库管理
+    **	生产环境中，数据服务和网站服务一起只用，构建网站运行平台 （Linux:LNMP、LAMP  Windows:WNMP、WAMP）
+
+
+一、搭建数据库服务器（192.168.4.51）
+
+·相关概念问题：
+	·数据库？：存储数据的仓库
+	·数据库那些公司在使用？：购物网站、游戏网站、金融网站、
+	·数据服务存储的是什么数据？：账号信息、对应的数据信息
+
+·提供数据库服务的软件有哪些？
+	·开源（一般是普通企业）：mysql、 mongodb、 redis
+	·商业（一般是国家机构）：oracle、 db2、 SQL SERVER(微软，不跨平台)
+
+·软件是否跨平台？：Linux、Unix、Windows
+
+·软件包的来源：官网下载（oracle官网）、使用操作系统安装光盘自带软件包（版本较低）
+
+·mysql软件介绍？：（mariadb == mysql）在一台服务器上只能二选一		
+
+ -关系型数据软件：
+	1.按一定的组织结构存储数据、并且数据和数据之间可以互相关联操作
+	2.跨平台 Linux  Uinx  Windows
+	3.可移植性强
+	4.支持多种语言 Python/Java/Perl/PHP
+	5.mysql软件包的封包类型： rpm包、 源码包（可以自定义安装信息）
+ -非关系型数据库软件：（NoSQL） mongodb、redis、memcached	(按键值对存储方式 key=值)
+
+
+
+	1）.装包
+	 1.1：删除系统自带的mariadb mysql数据库软件
+	   rpm -qa | grep -i mariadb
+	   systemctl stop mariadb
+	   rpm -e --nodeps mariadb-server mariadb		#忽略依赖包卸载	
+	   rm -rf /etc/my.cnf
+	   rm -rf /var/lib/mysql
+	 1.2：安装mysql软件
+	   tar -xf mysql-5.7.17-1.el7.x86_64.rpm-bundle.tar
+	   ls *.rpm
+	   rm -rf mysql-community-server-minimal-5.7.17-1.el7.x86_64.rpm	#删除最小安装
+	   rpm -Uvh mysql-community-*.rpm						#缺依赖包
+	   yum -y install perl-JSON							#安装依赖包
+	   rpm -Uvh mysql-community-*.rpm						#安装mysql软件
+	   rpm -qa | grep -i mysql
+
+
+	2）.修改配置文件 （主配置文件：/etc/my.cnf,数据库目录：/var/lib/mysql）
+	    不用修改，按默认配置运行即可
+
+	3）.启动服务(服务名：mysqld)
+	  systemctl start mysqld.service
+	  systemctl enable mysqld.service
+
+	4）.查看服务进程和端口号
+	  ps -C mysqld				#查进程
+	  ss -nutlp | grep mysqld		#查端口
+
+
+
+
+二、数据库服务的基本使用
+	
+	2.1 使用初始密码在本机连接数据库服务(不改密码不能操作数据库)
+
+		mysql  -h数据库服务器ip地址   -u用户名   -p密码    【库名】
+		mysql服务的日志文件：/var/log/mysqld.log			#首次登陆的初始密码在这里
+		grep password /var/log/mysqld.log	#查看初始密码,在root@localhost后面的就是
+
+		mysql -hlocalhost -uroot -p'y:6qoenfyqaN'	#用-h本机，-p查到的初始密码 登陆mysql
+		mysql> help						#查看mysql的快捷键
+
+
+	2.2 重置本机连接密码
+		
+		mysql> alter user root@"localhost" identified by "mima";	 #不能改，要设置策略
+临时改策略：		set global validate_password_policy=0;	#修改验证策略，只检查密码长度
+			set global validate_password_length=6;	#修改密码长度不能小于6个字符
+			alter user root@"localhost" identified by "123456"; #改root在本机登陆的密码
+永久改密码策略： vim /etc/my.cnf
+		   [mysqld]
+		   validate_password_policy=0
+		   validate_password_length=6
+		   :wq	
+		 systemctl restart mysqld.service
+
+
+	2.3 把数据存储到数据库服务器上的过程
+	   ·连接数据库服务器（命令行  API 图形管理工具）
+	   ·选择库（存放数据的文件夹）
+	   ·选择表（文件）
+	   ·插入记录（行）
+	   ·断开连接
+
+
+	2.5 sql命令使用规则
+		a).操作命令不区分大小写（密码、变量值除外）
+		b).每条SQL指令以；结束
+
+
+	2.4 sql命令分类
+		DDL
+		DML
+		DTL
+		DCL
+
+	2.6 管理数据库的sql命令
+	   ·查看库：mysql>	show databases;
+	   ·创建库：mysql>	create database gamedb(库名);
+	   ·切换库：mysql>	drop database gamedb(库名);
+	   ·删除库：mysql>	use gamedb(库名);
+	   ·显示当前所在的库：  mysql>   select database();		
+
+	***  建完的库在数据库目录下有对应的文件夹：ls /var/lib/mysql/
+
+	2.7 管理表的sql命令
+	   ·查看表：mysql>	show tables;
+	   ·创建表：mysql>	mysql> create table gamedb.stuinfo(
+				    -> name char(10),
+				    -> addr char(20)
+			a#	    -> );
+		库名.表名（字段名 类型(宽度) 约束条件，
+			   字段名 类型(宽度) 约束条件，
+			   ..........   ............）；
+
+	   ·删除表：mysql>	drop table gamedb.stuinfo;
+	   ·查看表记录：mysql>	select *(所有列) from gamedb.stuinfo(库.表名);
+	   ·查看表结构：mysql>	desc gamedb.stuinfo;
+
+	*** 所建的表会在所在库的文件夹下生成对应的同名文件：ls /var/lib/mysql/gamedb/
+
+
+	2.8 管理记录的sql命令
+	  ·查看已有记录	：mysql>	select * from gamedb.stuinfo;
+
+	  ·插入已有记录 ：mysql>	insert into gamedb.stuinfo values("tom","guangzhou");
+					insert into 库名.表名 values(字段值列表);
+
+	  ·修改已有记录 ：mysql>	update 库名.表名 set 字段名=值 where 条件；
+					update gamedb.stuinfo set addr="guangzhou" where name="tom";
+
+	  ·删除所有记录 ：mysql>	delete from gamedb.stuinfo;(库名.表名)
+
+
+
+
+
+三、mysql数据类型
+
+
+3.1 数值类型 （成绩 年龄 工资）		#每种类型的存储数据范围都是固定的
+
+  *** ·unsigned 使用数值类型无符号的范围
+  *** ·那种数值类型的取值范围都有两个：
+		有符号范围： -...~+...	(可以取负值)
+		无符号范围： 0～...	(从0开始取值)
+
+    ·整数类型：只能存整数		# 存小数会四舍五入变为整数： 4.5=5；4.2=4；
+	微小整形：tinyint  unsigned()
+	小整形  ：smallint
+	中整形  ：mediumint
+	大整形  ：int
+	极大整形：bigint
+  ·案例：
+	create database studb;
+	use studb;
+	create table t1(level smallint,age tinyint);
+	insert into t1 values(1024,19),(9,21);
+	insert into t1 values(123456,91);	#报错 level的值超出范围
+	insert into t1 values(21.9,4.2);	#存进去的值为 （22，4）
+	select * from t1;
+
+	create table t2(level int unsigned,
+			   age tinyint unsigned);	
+	insert into t2 values(-201,-1);			#报错，赋值范围超出了
+	insert into t2 values(1212,0);
+	select * from t2;
+
+    ·浮点型  ：能存小数
+	单精度浮点数：float(M,N)
+	双精度浮点数：double(M,N)
+	M 设置总位数
+	N 设置小数位位数
+
+	 正数.小数	总位数	整数位  小数位
+	 18088.88	  7	   5	  2	
+   ·案例：
+	create table t3(play float(6,2));
+	insert into t3 values(1000.22),(-9999.99);
+	insert into t3 values(22222);			  #报错，整数位超出范围 总数6 小数2 整数4位
+	select * from t3;
+
+
+
+3.2 字符类型 （商品名称 籍贯 姓名 生产厂家）
+
+	char(255)	  ：固定长度字符类型   ***  定义char(5)就必须存5个字符串，如果不够5个会自动加空格
+	varchar(65532) ：变长字符类型
+    大文本类型：(音频、视频、图片) #存放在硬盘，数据库只放这些大文件的路径信息	
+	blob
+	text
+   ·案例：
+	create table t5(name char(5),addrhome char(30),email varchar(25));
+	insert into t5 values("ldj","jieyang","386578338@qq.com");
+	select * from t5;
+
+
+3.3 日期时间类型（注册时间 约会时间 开会时间 入职时间）
+
+	年  ： year	YYYY		2018		#年
+	日期： date	YYYYMMDD	20180423	#年月日
+	时间： time	HHMMSS	161928	#时分秒
+   ·案例：
+	create table t6(name char(15),			#姓名
+			age tinyint unsigned,		#年龄
+			play float(7,2),			#工资
+			email varchar(30),			#邮箱
+			birthday date,			#日期
+			up_time time,			#时间
+			start_year year,			#年
+			party datetime);			#日期时间
+	insert into t6 values("林德佳",22,26800,
+				   "ldj@qq.com",20181001,083000,1996,20180501220000);
+	select * from t6;	
+
+
+	日期时间类型(范围不一样)： datetime(没赋值时，默认位NULL)
+		      	  timestamp(没赋值时，默认以当前系统时间赋值)
+	  		     YYYYMMDDHHMMSS   20180423161928
+   ·案例：
+	create table t7(meetting datetime,party timestamp);
+	insert into t7 values(now(),now());			#select * from t7; 都有赋值
+	insert into t7(party) values(20161123184518);	#meetting 没赋值位NULL
+	insert into t7(meetting) values(20201123180000);	#都有值，party的值为当前系统时间
+
+
+
+   **	·获取系统日期时间给对应的日期时间字段类型赋值
+  ***	·获取日期时间函数：
+	 select  now()： 获取当前系统时间			
+	 select  year(日期时间)：获取指定时间中的年		#year(now()); 或year(20190111);
+	 select  month()：获取指定时间中的月		#month(now());获取系统时间中的月
+	 select  day():获取指定时间中的日期
+	 select  date():获取指定时间中的 年月日
+	 select  time():获取指定时间中的 时分秒
+   ·案例：
+	insert into t6 values("zgx",23,35541,"做贡献@qq.com",
+					date(now()),time(now()),
+					year(now()),now());	
+	select * from t6;	
+	insert into t6(name,start_year) values("tom","2000");
+
+
+   ** 可以使用2位数字给year类型的字段赋值，规律如下：
+	01-69 ： 20xx
+	70-99	: 20xx
+
+
+
+3.4 枚举类型 （插入记录时 记录的值 在列举的范围内选择 ：『性别  爱好 专业』）
+
+	enum(值列表)	： 单选
+	set(值列表)	： 多选
+
+    ·案例：
+	create table t8(name char(15),
+			sex enum("boy","girl","baomi"),
+			likes set("girl","game","money","eat"));
+	desc t8;
+	insert into t8 values("ldj","boy","game,girl,money");
+	insert into t8 values("zgx",2,"game,girl,money");		#enum中插入2 为第二个选项
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
